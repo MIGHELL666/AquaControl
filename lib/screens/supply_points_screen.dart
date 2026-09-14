@@ -41,7 +41,7 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
         title: zone.name,
         subtitle: isSupplied
             ? '${zone.totalDispensers} despachadores • Todos abastecidos'
-            : '${zone.totalDispensers} despachadores • ${zone.suppliedCount} abastecidos, ${zone.pendingCount} falta${zone.pendingCount > 1 ? 'n' : ''}',
+            : '${zone.totalDispensers} despachadores • ${zone.suppliedCount} abastecidos, ${zone.pendingCount} pendiente${zone.pendingCount > 1 ? 's' : ''}',
         status: isSupplied ? SupplyStatus.supplied : SupplyStatus.pending,
       );
     }).toList();
@@ -49,18 +49,18 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
 
   List<SupplyPointItem> get _filteredPoints {
     return _allPoints.where((item) {
-      // Filter tab
-      if (_selectedFilter == 'Abastecidos' && item.status != SupplyStatus.supplied) {
+      if (_selectedFilter == 'Abastecidos' &&
+          item.status != SupplyStatus.supplied) {
         return false;
       }
-      if (_selectedFilter == 'Pendientes' && item.status != SupplyStatus.pending) {
+      if (_selectedFilter == 'Pendientes' &&
+          item.status != SupplyStatus.pending) {
         return false;
       }
-      // Search query
       if (_searchQuery.isNotEmpty) {
-        final query = _searchQuery.toLowerCase();
-        return item.title.toLowerCase().contains(query) ||
-            item.subtitle.toLowerCase().contains(query);
+        final q = _searchQuery.toLowerCase();
+        return item.title.toLowerCase().contains(q) ||
+            item.subtitle.toLowerCase().contains(q);
       }
       return true;
     }).toList();
@@ -68,6 +68,9 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final supplied = _allPoints.where((p) => p.status == SupplyStatus.supplied).length;
+    final pending = _allPoints.where((p) => p.status == SupplyStatus.pending).length;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
       child: Column(
@@ -78,7 +81,11 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
             children: [
               if (widget.showBackButton) ...[
                 IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: AquaColors.icyBlue),
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    size: 18,
+                    color: AquaColors.textSecondary,
+                  ),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 const SizedBox(width: 4),
@@ -86,100 +93,150 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
               Text(
                 'Puntos de abastecimiento',
                 style: GoogleFonts.montserrat(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AquaColors.textPrimary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          // Filter chips: Todos, Abastecidos, Pendientes
+          // Mini resumen
+          Row(
+            children: [
+              _buildMiniStat('${_allPoints.length}', 'Total', AquaColors.slateBlue),
+              const SizedBox(width: 8),
+              _buildMiniStat('$supplied', 'Abastecidos', AquaColors.statusSupplied),
+              const SizedBox(width: 8),
+              _buildMiniStat('$pending', 'Pendientes', AquaColors.statusPending),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Filter chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 _buildFilterChip('Todos'),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 _buildFilterChip('Abastecidos'),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 _buildFilterChip('Pendientes'),
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
-          // Search Field
+          // Buscador
           Container(
-            height: 44,
+            height: 46,
             decoration: BoxDecoration(
-              color: const Color(0x283D518C),
+              color: Colors.white.withValues(alpha: 0.75),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AquaColors.glassBorderSubtle, width: 1),
+              border: Border.all(color: AquaColors.glassBorder),
+              boxShadow: [
+                BoxShadow(
+                  color: AquaColors.shadowCard,
+                  blurRadius: 8,
+                ),
+              ],
             ),
             child: TextField(
               onChanged: (val) => setState(() => _searchQuery = val),
-              style: GoogleFonts.montserrat(color: Colors.white, fontSize: 13),
+              style: GoogleFonts.montserrat(
+                color: AquaColors.textPrimary,
+                fontSize: 13,
+              ),
               decoration: InputDecoration(
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AquaColors.icyBlue),
+                contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                prefixIcon: const Icon(
+                  Icons.search_rounded,
+                  size: 18,
+                  color: AquaColors.slateBlue,
+                ),
                 hintText: 'Buscar punto...',
-                hintStyle: GoogleFonts.montserrat(color: AquaColors.textMuted, fontSize: 13),
+                hintStyle: GoogleFonts.montserrat(
+                  color: AquaColors.textMuted,
+                  fontSize: 13,
+                ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          // Points List
+          // Lista de puntos
           Expanded(
             child: _filteredPoints.isEmpty
                 ? Center(
-                    child: Text(
-                      'No se encontraron puntos',
-                      style: GoogleFonts.montserrat(color: AquaColors.textMuted),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.search_off_rounded,
+                          size: 40,
+                          color: AquaColors.textMuted,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No se encontraron puntos',
+                          style: GoogleFonts.montserrat(
+                            color: AquaColors.textMuted,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 : ListView.separated(
                     itemCount: _filteredPoints.length,
-                    separatorBuilder: (_, i) => const SizedBox(height: 10),
+                    separatorBuilder: (_, i) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final item = _filteredPoints[index];
+                      final isSupplied = item.status == SupplyStatus.supplied;
                       return GlassCard(
                         borderRadius: 16,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        backgroundColor: const Color(0x221E3368),
-                        borderColor: AquaColors.glassBorderSubtle,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        borderColor: isSupplied
+                            ? AquaColors.glassBorder
+                            : AquaColors.statusPendingBorder,
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => PointDetailScreen(pointName: item.title),
+                              builder: (_) =>
+                                  PointDetailScreen(pointName: item.title),
                             ),
                           );
                         },
                         child: Row(
                           children: [
-                            // Pin icon in circle
                             Container(
-                              width: 36,
-                              height: 36,
+                              width: 38,
+                              height: 38,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: const Color(0x334468C7),
+                                color: isSupplied
+                                    ? AquaColors.statusSuppliedBg
+                                    : AquaColors.statusPendingBg,
                               ),
-                              child: const Icon(
-                                Icons.location_on_outlined,
-                                color: AquaColors.icyBlue,
-                                size: 19,
+                              child: Icon(
+                                isSupplied
+                                    ? Icons.location_on_rounded
+                                    : Icons.warning_amber_rounded,
+                                color: isSupplied
+                                    ? AquaColors.statusSupplied
+                                    : AquaColors.statusPending,
+                                size: 20,
                               ),
                             ),
                             const SizedBox(width: 14),
 
-                            // Title & Subtitle
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,8 +245,8 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
                                     item.title,
                                     style: GoogleFonts.montserrat(
                                       fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                      color: AquaColors.textPrimary,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -197,20 +254,18 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
                                     item.subtitle,
                                     style: GoogleFonts.montserrat(
                                       fontSize: 11,
-                                      color: AquaColors.textSecondary,
+                                      color: AquaColors.textMuted,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
 
-                            // Status badge
                             AquaBadge(status: item.status),
-                            const SizedBox(width: 8),
-
+                            const SizedBox(width: 6),
                             const Icon(
                               Icons.chevron_right_rounded,
-                              size: 18,
+                              size: 16,
                               color: AquaColors.textMuted,
                             ),
                           ],
@@ -224,31 +279,81 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
     );
   }
 
+  Widget _buildMiniStat(String value, String label, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.25)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: GoogleFonts.montserrat(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
+            Text(
+              label,
+              style: GoogleFonts.montserrat(
+                fontSize: 9,
+                color: AquaColors.textMuted,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFilterChip(String label) {
     final isSelected = _selectedFilter == label;
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _selectedFilter = label;
-        });
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected ? AquaColors.cornflowerBlue : const Color(0x243D518C),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? Colors.white.withValues(alpha: 0.3) : AquaColors.glassBorderSubtle,
-            width: 1,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      child: InkWell(
+        onTap: () => setState(() => _selectedFilter = label),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AquaColors.turquoise
+                : Colors.white.withValues(alpha: 0.75),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected
+                  ? Colors.white.withValues(alpha: 0.3)
+                  : AquaColors.glassBorder,
+              width: 1,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AquaColors.shadowButton,
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    )
+                  ]
+                : [
+                    BoxShadow(
+                      color: AquaColors.shadowCard,
+                      blurRadius: 6,
+                    )
+                  ],
           ),
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.montserrat(
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: isSelected ? Colors.white : AquaColors.textSecondary,
+          child: Text(
+            label,
+            style: GoogleFonts.montserrat(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isSelected ? Colors.white : AquaColors.textSecondary,
+            ),
           ),
         ),
       ),

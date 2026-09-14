@@ -4,13 +4,17 @@ import '../theme/aqua_colors.dart';
 import '../widgets/aqua_button.dart';
 import '../widgets/glass_card.dart';
 import 'app_shell.dart';
-import 'login_screen.dart';
-import 'qr_scanner_screen.dart';
+import 'clients_screen.dart';
+import 'digital_signature_screen.dart';
 import 'dispenser_detail_screen.dart';
-import 'success_screen.dart';
-import 'role_selection_screen.dart';
+import 'login_screen.dart';
 import 'point_detail_screen.dart';
+import 'qr_scanner_screen.dart';
+import 'role_selection_screen.dart';
 import 'splash_screen.dart';
+import 'success_screen.dart';
+import 'worker_shell.dart';
+import 'workers_management_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -34,8 +38,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             'Más opciones y Estilos',
             style: GoogleFonts.montserrat(
               fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              color: AquaColors.textPrimary,
             ),
           ),
           const SizedBox(height: 16),
@@ -44,18 +48,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
           GlassCard(
             borderRadius: 18,
             padding: const EdgeInsets.all(16),
-            backgroundColor: const Color(0x25233C78),
-            borderColor: AquaColors.glassBorderSubtle,
             child: Row(
               children: [
                 Container(
                   width: 48,
                   height: 48,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Color(0x334468C7),
+                    color: AquaColors.glacier.withValues(alpha: 0.5),
+                    border: Border.all(
+                      color: AquaColors.slateBlue.withValues(alpha: 0.3),
+                      width: 1.5,
+                    ),
                   ),
-                  child: const Icon(Icons.person_outline_rounded, color: Colors.white, size: 24),
+                  child: const Icon(
+                    Icons.person_outline_rounded,
+                    color: AquaColors.turquoise,
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -67,7 +77,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: GoogleFonts.montserrat(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: AquaColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -131,6 +141,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildNavChip(context, '8. Punto Producción', () {
                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PointDetailScreen()));
               }),
+              _buildNavChip(context, '9. Clientes / Empresas', () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ClientsScreen()));
+              }),
+              _buildNavChip(context, '10. Gestión Trabajadores', () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const WorkersManagementScreen()));
+              }),
+              _buildNavChip(context, '11. Firma Digital', () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const DigitalSignatureScreen(
+                    dispenserId: '#023',
+                    pointName: 'Producción',
+                    bottleCount: 2,
+                  ),
+                ));
+              }),
+              _buildNavChip(context, '12. Historial Tabla/Gráfica', () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const WorkerShell(initialTabIndex: 2),
+                ));
+              }),
             ],
           ),
           const SizedBox(height: 24),
@@ -150,27 +180,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
           GlassCard(
             borderRadius: 18,
             padding: const EdgeInsets.all(16),
-            backgroundColor: const Color(0x221E3368),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Paleta de colores',
+                  'Paleta de colores oficial',
                   style: GoogleFonts.montserrat(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: AquaColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildColorSwatch(AquaColors.icyBlue, '#7B8FF2', 'Icy Blue'),
-                    _buildColorSwatch(AquaColors.cornflowerBlue, '#7692FF', 'Cornflower'),
-                    _buildColorSwatch(AquaColors.persianBlue, '#1B2C7C', 'Persian'),
-                    _buildColorSwatch(AquaColors.deepNavy, '#091540', 'Deep Navy'),
-                    _buildColorSwatch(AquaColors.duskBlue, '#3D518C', 'Dusk Blue'),
+                    _buildColorSwatch(AquaColors.turquoise, '#447F98', 'Turquoise'),
+                    _buildColorSwatch(AquaColors.slateBlue, '#629BB5', 'Slate Blue'),
+                    _buildColorSwatch(AquaColors.platinum, '#DADEE1', 'Platinum'),
+                    _buildColorSwatch(AquaColors.glacier, '#B9D8E1', 'Glacier'),
+                    _buildColorSwatch(AquaColors.iceBlue, '#D6EBF3', 'Ice Blue'),
                   ],
                 ),
               ],
@@ -182,7 +211,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           GlassCard(
             borderRadius: 18,
             padding: const EdgeInsets.all(16),
-            backgroundColor: const Color(0x221E3368),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -191,7 +219,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: GoogleFonts.montserrat(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: AquaColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -223,8 +251,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Switch(
                       value: _switchValue,
                       thumbColor: const WidgetStatePropertyAll(Colors.white),
-                      activeTrackColor: AquaColors.cornflowerBlue,
-                      inactiveTrackColor: AquaColors.persianBlue,
+                      activeTrackColor: AquaColors.turquoise,
+                      inactiveTrackColor: AquaColors.platinum,
                       onChanged: (val) => setState(() => _switchValue = val),
                     ),
                   ],
@@ -235,17 +263,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 GlassCard(
                   borderRadius: 12,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  backgroundColor: const Color(0x203D518C),
+                  backgroundColor: AquaColors.glacier.withValues(alpha: 0.35),
                   borderColor: AquaColors.glassBorderSubtle,
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline_rounded, size: 18, color: AquaColors.icyBlue),
+                      const Icon(Icons.info_outline_rounded, size: 18, color: AquaColors.turquoise),
                       const SizedBox(width: 10),
                       Text(
                         'Tarjeta de información',
                         style: GoogleFonts.montserrat(
                           fontSize: 12,
-                          color: Colors.white,
+                          color: AquaColors.textPrimary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -261,7 +289,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           GlassCard(
             borderRadius: 18,
             padding: const EdgeInsets.all(16),
-            backgroundColor: const Color(0x221E3368),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -270,17 +297,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: GoogleFonts.montserrat(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: AquaColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
-                _buildBullet('Glasmorfismo (BackdropFilter & Blur)'),
-                _buildBullet('Transparencias y desenfoque fluido'),
-                _buildBullet('Esquinas redondeadas'),
-                _buildBullet('Sombras suaves con glow azul'),
-                _buildBullet('Iconografía minimalista'),
-                _buildBullet('Gradientes sutiles'),
-                _buildBullet('Sensación de limpieza, agua y tecnología'),
+                _buildBullet('Glasmorfismo claro (BackdropFilter & Blur 16-20px)'),
+                _buildBullet('Superficies blancas translúcidas y glaciares'),
+                _buildBullet('Esquinas redondeadas suaves (16-24px)'),
+                _buildBullet('Sombras sutiles con tono turquesa'),
+                _buildBullet('Iconografía minimalista y moderna'),
+                _buildBullet('Gradientes orgánicos de agua (Ice Blue → Glacier)'),
+                _buildBullet('Sensación de limpieza, pureza y tecnología'),
               ],
             ),
           ),
@@ -308,10 +335,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return ActionChip(
       label: Text(
         label,
-        style: GoogleFonts.montserrat(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w500),
+        style: GoogleFonts.montserrat(
+          fontSize: 11,
+          color: AquaColors.textPrimary,
+          fontWeight: FontWeight.w500,
+        ),
       ),
-      backgroundColor: const Color(0x333D518C),
-      side: const BorderSide(color: AquaColors.glassBorderSubtle, width: 1),
+      backgroundColor: AquaColors.glacier.withValues(alpha: 0.4),
+      side: const BorderSide(color: AquaColors.platinum, width: 1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onPressed: onTap,
     );
@@ -326,10 +357,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1),
+            border: Border.all(color: AquaColors.platinum, width: 1),
             boxShadow: [
               BoxShadow(
-                color: color.withValues(alpha: 0.3),
+                color: AquaColors.shadowCard,
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -339,11 +370,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(height: 6),
         Text(
           hex,
-          style: GoogleFonts.montserrat(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white),
+          style: GoogleFonts.montserrat(
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+            color: AquaColors.textPrimary,
+          ),
         ),
         Text(
           name,
-          style: GoogleFonts.montserrat(fontSize: 8, color: AquaColors.textMuted),
+          style: GoogleFonts.montserrat(
+            fontSize: 8,
+            color: AquaColors.textMuted,
+          ),
         ),
       ],
     );
@@ -355,7 +393,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('• ', style: TextStyle(color: AquaColors.icyBlue, fontSize: 13)),
+          const Text('• ', style: TextStyle(color: AquaColors.turquoise, fontSize: 13)),
           Expanded(
             child: Text(
               text,

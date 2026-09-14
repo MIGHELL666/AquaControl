@@ -13,26 +13,50 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
   Timer? _timer;
   late AnimationController _fadeController;
+  late AnimationController _scaleController;
+  late AnimationController _pulseController;
+
   late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
     super.initState();
+
     _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1000),
     )..forward();
+
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..forward();
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
 
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeIn,
+      curve: Curves.easeOut,
     );
 
-    // Auto-advance after 2.5 seconds
-    _timer = Timer(const Duration(milliseconds: 2500), _goToNext);
+    _scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
+    );
+
+    _pulseAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _timer = Timer(const Duration(milliseconds: 2800), _goToNext);
   }
 
   void _goToNext() {
@@ -40,8 +64,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _timer?.cancel();
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 600),
-        pageBuilder: (context, animation, secondaryAnimation) => const RoleSelectionScreen(),
+        transitionDuration: const Duration(milliseconds: 700),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const RoleSelectionScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -53,6 +78,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void dispose() {
     _timer?.cancel();
     _fadeController.dispose();
+    _scaleController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -60,101 +87,143 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       body: AquaBackground(
-        child: InkWell(
-          onTap: _goToNext, // Still allows skipping on tap
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28.0),
+        useSafeArea: false,
+        child: GestureDetector(
+          onTap: _goToNext,
+          behavior: HitTestBehavior.translucent,
+          child: SizedBox.expand(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Spacer(flex: 3),
 
-                  // Center glowing Star Logo
-                  const Center(
-                    child: AquaStar(
-                      size: 96,
-                      color: AquaColors.icyBlue,
+                  // Logo con animación de escala y pulso
+                  AnimatedBuilder(
+                    animation: Listenable.merge(
+                        [_scaleAnimation, _pulseAnimation]),
+                    builder: (context, child) => Transform.scale(
+                      scale: _scaleAnimation.value * _pulseAnimation.value,
+                      child: child,
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Glow ring externo
+                        Container(
+                          width: 130,
+                          height: 130,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                AquaColors.turquoise.withValues(alpha: 0.18),
+                                AquaColors.glacier.withValues(alpha: 0.10),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                        // Fondo de logo
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.75),
+                            border: Border.all(
+                              color: AquaColors.glassBorder,
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AquaColors.turquoise
+                                    .withValues(alpha: 0.22),
+                                blurRadius: 28,
+                                spreadRadius: 0,
+                              ),
+                            ],
+                          ),
+                          child: const Center(
+                            child: AquaStar(
+                              size: 56,
+                              color: AquaColors.turquoise,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 36),
 
-                  // Brand Title
+                  const SizedBox(height: 40),
+
+                  // Nombre de la marca
                   Text(
                     'AquaControl',
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.montserrat(
                       fontSize: 34,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      letterSpacing: 1.2,
+                      fontWeight: FontWeight.w800,
+                      color: AquaColors.textPrimary,
+                      letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
 
-                  // Subtitle
+                  // Subtítulo corporativo
                   Text(
-                    'Gestión de Despachadores\nde Agua',
+                    'Gestión de Despachadores de Agua',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.montserrat(
-                      fontSize: 14,
+                      fontSize: 13,
                       color: AquaColors.textSecondary,
-                      height: 1.4,
                       fontWeight: FontWeight.w400,
+                      letterSpacing: 0.2,
                     ),
                   ),
 
                   const Spacer(flex: 3),
 
-                  // Loading indicator & Page indicator dots
+                  // Indicadores de carga — puntos pill
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 24,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
+                      _buildDot(active: true),
                       const SizedBox(width: 6),
-                      Container(
-                        width: 14,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
+                      _buildDot(),
                       const SizedBox(width: 6),
-                      Container(
-                        width: 14,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
+                      _buildDot(),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   Text(
-                    'Cargando...',
+                    'Iniciando...',
                     style: GoogleFonts.montserrat(
                       fontSize: 11,
                       color: AquaColors.textMuted,
                       letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDot({bool active = false}) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      width: active ? 24 : 8,
+      height: 6,
+      decoration: BoxDecoration(
+        color: active
+            ? AquaColors.turquoise
+            : AquaColors.platinum,
+        borderRadius: BorderRadius.circular(3),
       ),
     );
   }

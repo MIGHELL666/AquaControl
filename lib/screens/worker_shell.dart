@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/aqua_colors.dart';
 import '../widgets/aqua_background.dart';
+import '../widgets/zoom_container.dart';
 import 'qr_scanner_screen.dart';
 import 'worker_dispensers_screen.dart';
+import 'worker_history_table_screen.dart';
 
 class WorkerShell extends StatefulWidget {
   final int initialTabIndex;
@@ -39,27 +41,37 @@ class _WorkerShellState extends State<WorkerShell> {
       body: AquaBackground(
         child: SafeArea(
           bottom: false,
-          child: IndexedStack(
-            index: _currentIndex,
-            children: [
-              const QrScannerScreen(),
-              WorkerDispensersScreen(
-                onNavigateToScan: () => _onTabSelected(0),
-              ),
-            ],
+          child: AquaZoomContainer(
+            child: IndexedStack(
+              index: _currentIndex,
+              children: [
+                const QrScannerScreen(),
+                WorkerDispensersScreen(
+                  onNavigateToScan: () => _onTabSelected(0),
+                ),
+                const WorkerHistoryTableScreen(),
+              ],
+            ),
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF091438).withValues(alpha: 0.88),
-          border: const Border(
-            top: BorderSide(color: AquaColors.glassBorderSubtle, width: 1),
-          ),
-        ),
-        child: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+      bottomNavigationBar: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AquaColors.glassSurfaceLight,
+              border: const Border(
+                top: BorderSide(color: AquaColors.glassBorder, width: 1),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AquaColors.shadowFloat,
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
             child: SafeArea(
               top: false,
               child: SizedBox(
@@ -77,6 +89,11 @@ class _WorkerShellState extends State<WorkerShell> {
                       Icons.checklist_rounded,
                       'Despachadores',
                     ),
+                    _buildNavItem(
+                      2,
+                      Icons.table_chart_rounded,
+                      'Tabla',
+                    ),
                   ],
                 ),
               ),
@@ -89,31 +106,49 @@ class _WorkerShellState extends State<WorkerShell> {
 
   Widget _buildNavItem(int index, IconData icon, String label) {
     final isSelected = _currentIndex == index;
-    final color = isSelected ? AquaColors.cornflowerBlue : AquaColors.textMuted;
+    final color = isSelected ? AquaColors.turquoise : AquaColors.textSecondary;
 
     return Expanded(
       child: InkWell(
         onTap: () => _onTabSelected(index),
-        splashColor: Colors.transparent,
+        splashColor: AquaColors.turquoise.withValues(alpha: 0.08),
         highlightColor: Colors.transparent,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: color,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.montserrat(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: color,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSelected ? 16 : 0,
+                  vertical: isSelected ? 3 : 0,
+                ),
+                decoration: isSelected
+                    ? BoxDecoration(
+                        color: AquaColors.turquoise.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                      )
+                    : null,
+                child: Icon(
+                  icon,
+                  size: 22,
+                  color: color,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: GoogleFonts.montserrat(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

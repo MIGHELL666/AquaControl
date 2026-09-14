@@ -82,7 +82,7 @@ class _RegisterDispenserScreenState extends State<RegisterDispenserScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: AquaColors.icyBlue),
+                    icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: AquaColors.turquoise),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   const SizedBox(width: 4),
@@ -90,8 +90,8 @@ class _RegisterDispenserScreenState extends State<RegisterDispenserScreen> {
                     'Registrar Despachador',
                     style: GoogleFonts.montserrat(
                       fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      color: AquaColors.textPrimary,
                     ),
                   ),
                 ],
@@ -109,47 +109,46 @@ class _RegisterDispenserScreenState extends State<RegisterDispenserScreen> {
                       // Illustration / icon header
                       Center(
                         child: Container(
-                          width: 80,
-                          height: 80,
+                          width: 76,
+                          height: 76,
                           decoration: BoxDecoration(
-                            color: const Color(0x334E78E6),
+                            color: Colors.white,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: AquaColors.cornflowerBlue.withValues(alpha: 0.5),
+                              color: AquaColors.platinum,
                               width: 1.5,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AquaColors.cornflowerBlue.withValues(alpha: 0.25),
-                                blurRadius: 28,
-                                spreadRadius: 2,
+                                color: AquaColors.shadowCard,
+                                blurRadius: 18,
+                                offset: const Offset(0, 4),
                               ),
                             ],
                           ),
                           child: const Icon(
-                            Icons.water_drop_outlined,
-                            color: AquaColors.icyBlue,
-                            size: 40,
+                            Icons.water_drop_rounded,
+                            color: AquaColors.turquoise,
+                            size: 38,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       Center(
                         child: Text(
                           'Nuevo despachador',
                           style: GoogleFonts.montserrat(
                             fontSize: 14,
+                            fontWeight: FontWeight.w600,
                             color: AquaColors.textSecondary,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 24),
 
                       GlassCard(
                         borderRadius: 20,
                         padding: const EdgeInsets.all(20),
-                        backgroundColor: const Color(0x26233C78),
-                        borderColor: AquaColors.glassBorderSubtle,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -159,42 +158,68 @@ class _RegisterDispenserScreenState extends State<RegisterDispenserScreen> {
                             // Zona - Dropdown
                             _buildLabel('Zona / Punto'),
                             const SizedBox(height: 8),
-                            DropdownButtonFormField<String>(
-                              initialValue: _zonaSeleccionada,
-                              dropdownColor: const Color(0xFF0F1D4D),
-                              style: GoogleFonts.montserrat(color: Colors.white, fontSize: 14),
-                              decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.location_on_outlined, size: 20, color: AquaColors.icyBlue),
-                                hintText: 'Selecciona la zona',
-                                hintStyle: GoogleFonts.montserrat(color: AquaColors.textMuted, fontSize: 14),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: AquaColors.platinum),
                               ),
-                              items: _zonasDisponibles.map((zona) {
-                                return DropdownMenuItem<String>(
-                                  value: zona,
-                                  child: Text(zona),
-                                );
-                              }).toList(),
-                              onChanged: (val) => setState(() => _zonaSeleccionada = val),
-                              validator: (val) => val == null ? 'Selecciona una zona' : null,
+                              child: DropdownButtonFormField<String>(
+                                initialValue: _zonaSeleccionada,
+                                dropdownColor: Colors.white,
+                                style: GoogleFonts.montserrat(
+                                  color: AquaColors.textPrimary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                decoration: InputDecoration(
+                                  prefixIcon: const Icon(Icons.location_on_outlined, size: 20, color: AquaColors.turquoise),
+                                  hintText: 'Selecciona la zona',
+                                  hintStyle: GoogleFonts.montserrat(color: AquaColors.textMuted, fontSize: 14),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                ),
+                                items: _zonasDisponibles.map((zona) {
+                                  return DropdownMenuItem<String>(
+                                    value: zona,
+                                    child: Text(zona),
+                                  );
+                                }).toList(),
+                                onChanged: (val) => setState(() => _zonaSeleccionada = val),
+                                validator: (val) => val == null ? 'Selecciona una zona' : null,
+                              ),
                             ),
                             const SizedBox(height: 16),
 
                             // Número de despachador
                             _buildLabel('Número de despachador'),
                             const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _numeroController,
-                              keyboardType: TextInputType.number,
-                              style: GoogleFonts.montserrat(color: Colors.white, fontSize: 14),
-                              decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.tag_rounded, size: 20, color: AquaColors.icyBlue),
-                                hintText: 'Ej. 024',
-                                hintStyle: GoogleFonts.montserrat(color: AquaColors.textMuted, fontSize: 14),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: AquaColors.platinum),
                               ),
-                              validator: (val) {
-                                if (val == null || val.trim().isEmpty) return 'Ingresa el número';
-                                return null;
-                              },
+                              child: TextFormField(
+                                controller: _numeroController,
+                                keyboardType: TextInputType.number,
+                                style: GoogleFonts.montserrat(
+                                  color: AquaColors.textPrimary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                decoration: InputDecoration(
+                                  prefixIcon: const Icon(Icons.tag_rounded, size: 20, color: AquaColors.turquoise),
+                                  hintText: 'Ej. 024',
+                                  hintStyle: GoogleFonts.montserrat(color: AquaColors.textMuted, fontSize: 14),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                ),
+                                validator: (val) {
+                                  if (val == null || val.trim().isEmpty) return 'Ingresa el número';
+                                  return null;
+                                },
+                              ),
                             ),
                           ],
                         ),
@@ -204,8 +229,6 @@ class _RegisterDispenserScreenState extends State<RegisterDispenserScreen> {
                       GlassCard(
                         borderRadius: 20,
                         padding: const EdgeInsets.all(20),
-                        backgroundColor: const Color(0x26233C78),
-                        borderColor: AquaColors.glassBorderSubtle,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -215,38 +238,64 @@ class _RegisterDispenserScreenState extends State<RegisterDispenserScreen> {
                             // Marca
                             _buildLabel('Marca'),
                             const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _marcaController,
-                              textCapitalization: TextCapitalization.words,
-                              style: GoogleFonts.montserrat(color: Colors.white, fontSize: 14),
-                              decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.business_outlined, size: 20, color: AquaColors.icyBlue),
-                                hintText: 'Ej. EcoWater',
-                                hintStyle: GoogleFonts.montserrat(color: AquaColors.textMuted, fontSize: 14),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: AquaColors.platinum),
                               ),
-                              validator: (val) {
-                                if (val == null || val.trim().isEmpty) return 'Ingresa la marca';
-                                return null;
-                              },
+                              child: TextFormField(
+                                controller: _marcaController,
+                                textCapitalization: TextCapitalization.words,
+                                style: GoogleFonts.montserrat(
+                                  color: AquaColors.textPrimary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                decoration: InputDecoration(
+                                  prefixIcon: const Icon(Icons.business_outlined, size: 20, color: AquaColors.turquoise),
+                                  hintText: 'Ej. EcoWater',
+                                  hintStyle: GoogleFonts.montserrat(color: AquaColors.textMuted, fontSize: 14),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                ),
+                                validator: (val) {
+                                  if (val == null || val.trim().isEmpty) return 'Ingresa la marca';
+                                  return null;
+                                },
+                              ),
                             ),
                             const SizedBox(height: 16),
 
                             // Modelo
                             _buildLabel('Modelo'),
                             const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _modeloController,
-                              textCapitalization: TextCapitalization.characters,
-                              style: GoogleFonts.montserrat(color: Colors.white, fontSize: 14),
-                              decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.settings_outlined, size: 20, color: AquaColors.icyBlue),
-                                hintText: 'Ej. E-200',
-                                hintStyle: GoogleFonts.montserrat(color: AquaColors.textMuted, fontSize: 14),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: AquaColors.platinum),
                               ),
-                              validator: (val) {
-                                if (val == null || val.trim().isEmpty) return 'Ingresa el modelo';
-                                return null;
-                              },
+                              child: TextFormField(
+                                controller: _modeloController,
+                                textCapitalization: TextCapitalization.characters,
+                                style: GoogleFonts.montserrat(
+                                  color: AquaColors.textPrimary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                decoration: InputDecoration(
+                                  prefixIcon: const Icon(Icons.settings_outlined, size: 20, color: AquaColors.turquoise),
+                                  hintText: 'Ej. E-200',
+                                  hintStyle: GoogleFonts.montserrat(color: AquaColors.textMuted, fontSize: 14),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                ),
+                                validator: (val) {
+                                  if (val == null || val.trim().isEmpty) return 'Ingresa el modelo';
+                                  return null;
+                                },
+                              ),
                             ),
                           ],
                         ),
@@ -263,7 +312,7 @@ class _RegisterDispenserScreenState extends State<RegisterDispenserScreen> {
                             color: AquaColors.statusSuppliedBg,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: AquaColors.statusSupplied.withValues(alpha: 0.4),
+                              color: AquaColors.statusSuppliedBorder,
                               width: 1,
                             ),
                           ),
@@ -275,7 +324,7 @@ class _RegisterDispenserScreenState extends State<RegisterDispenserScreen> {
                                 '¡Despachador registrado exitosamente!',
                                 style: GoogleFonts.montserrat(
                                   fontSize: 13,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
                                   color: AquaColors.statusSupplied,
                                 ),
                               ),
@@ -315,7 +364,7 @@ class _RegisterDispenserScreenState extends State<RegisterDispenserScreen> {
           width: 3,
           height: 16,
           decoration: BoxDecoration(
-            color: AquaColors.cornflowerBlue,
+            color: AquaColors.turquoise,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -324,8 +373,8 @@ class _RegisterDispenserScreenState extends State<RegisterDispenserScreen> {
           text,
           style: GoogleFonts.montserrat(
             fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AquaColors.textSecondary,
+            fontWeight: FontWeight.w700,
+            color: AquaColors.textPrimary,
             letterSpacing: 0.2,
           ),
         ),
@@ -338,7 +387,7 @@ class _RegisterDispenserScreenState extends State<RegisterDispenserScreen> {
       text,
       style: GoogleFonts.montserrat(
         fontSize: 12,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
         color: AquaColors.textSecondary,
       ),
     );

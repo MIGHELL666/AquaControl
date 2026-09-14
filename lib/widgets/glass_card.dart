@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../theme/aqua_colors.dart';
 
+/// Tarjeta con efecto glassmorphism — superficies translúcidas AquaControl.
 class GlassCard extends StatelessWidget {
   final Widget child;
   final double borderRadius;
@@ -12,6 +13,7 @@ class GlassCard extends StatelessWidget {
   final Color? borderColor;
   final double borderWidth;
   final double blurSigma;
+  final List<BoxShadow>? customShadow;
 
   const GlassCard({
     super.key,
@@ -23,27 +25,38 @@ class GlassCard extends StatelessWidget {
     this.backgroundColor,
     this.borderColor,
     this.borderWidth = 1.0,
-    this.blurSigma = 12.0,
+    this.blurSigma = 16.0,
+    this.customShadow,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveShadow = customShadow ??
+        [
+          BoxShadow(
+            color: AquaColors.shadowCard,
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: AquaColors.shadowCard.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ];
+
     Widget content = Container(
       padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: backgroundColor ?? const Color(0x1F223875),
+        // Blanco translúcido premium — efecto glass auténtico
+        color: backgroundColor ?? AquaColors.glassSurface,
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
-          color: borderColor ?? AquaColors.glassBorderSubtle,
+          color: borderColor ?? AquaColors.glassBorder,
           width: borderWidth,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF03071E).withValues(alpha: 0.25),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        boxShadow: effectiveShadow,
       ),
       child: child,
     );
@@ -68,6 +81,8 @@ class GlassCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(borderRadius),
           onTap: onTap,
+          splashColor: AquaColors.turquoise.withValues(alpha: 0.08),
+          highlightColor: AquaColors.glacier.withValues(alpha: 0.12),
           child: content,
         ),
       );

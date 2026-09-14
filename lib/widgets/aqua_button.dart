@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/aqua_colors.dart';
 
-enum AquaButtonType { primary, secondary, danger }
+enum AquaButtonType { primary, secondary, danger, ghost }
 
-class AquaButton extends StatelessWidget {
+class AquaButton extends StatefulWidget {
   final String text;
   final VoidCallback? onPressed;
   final AquaButtonType type;
@@ -12,6 +12,7 @@ class AquaButton extends StatelessWidget {
   final double? width;
   final double height;
   final bool isLoading;
+  final double borderRadius;
 
   const AquaButton({
     super.key,
@@ -22,104 +23,177 @@ class AquaButton extends StatelessWidget {
     this.width = double.infinity,
     this.height = 54,
     this.isLoading = false,
+    this.borderRadius = 26,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final isPrimary = type == AquaButtonType.primary;
-    final isDanger = type == AquaButtonType.danger;
+  State<AquaButton> createState() => _AquaButtonState();
+}
 
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(27),
-        gradient: isPrimary
-            ? const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF869DFF),
-                  AquaColors.cornflowerBlue,
-                  AquaColors.primaryButtonEnd,
-                ],
-              )
-            : isDanger
-                ? const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFFE55353),
-                      Color(0xFFD32F2F),
-                      Color(0xFF9A1B1B),
-                    ],
-                  )
-                : null,
-        color: (isPrimary || isDanger) ? null : const Color(0x283D518C),
-        border: Border.all(
-          color: isPrimary
-              ? Colors.white.withValues(alpha: 0.25)
-              : isDanger
-                  ? Colors.redAccent.withValues(alpha: 0.4)
-                  : AquaColors.glassBorder,
-          width: 1,
+class _AquaButtonState extends State<AquaButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 90),
+    );
+    _scaleAnim = Tween<double>(begin: 1.0, end: 0.96).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isPrimary = widget.type == AquaButtonType.primary;
+    final isDanger = widget.type == AquaButtonType.danger;
+    final isSecondary = widget.type == AquaButtonType.secondary;
+
+    // Colors per type
+    Color bgColor;
+    Color textColor;
+    Color borderColor;
+    List<BoxShadow> shadows;
+    Gradient? gradient;
+
+    if (isPrimary) {
+      gradient = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF538EA8), AquaColors.turquoise, Color(0xFF3A6E85)],
+      );
+      bgColor = AquaColors.turquoise;
+      textColor = AquaColors.textOnDark;
+      borderColor = Colors.white.withValues(alpha: 0.25);
+      shadows = [
+        BoxShadow(
+          color: AquaColors.shadowButton,
+          blurRadius: 18,
+          offset: const Offset(0, 6),
         ),
-        boxShadow: isPrimary
-            ? [
-                BoxShadow(
-                  color: AquaColors.cornflowerBlue.withValues(alpha: 0.35),
-                  blurRadius: 18,
-                  offset: const Offset(0, 6),
-                ),
-              ]
-            : isDanger
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFFD32F2F).withValues(alpha: 0.35),
-                      blurRadius: 18,
-                      offset: const Offset(0, 6),
-                    ),
-                  ]
-                : null,
+      ];
+    } else if (isDanger) {
+      gradient = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFD46B60), AquaColors.statusError, Color(0xFFAA4038)],
+      );
+      bgColor = AquaColors.statusError;
+      textColor = AquaColors.textOnDark;
+      borderColor = AquaColors.statusError.withValues(alpha: 0.35);
+      shadows = [
+        BoxShadow(
+          color: AquaColors.statusError.withValues(alpha: 0.35),
+          blurRadius: 16,
+          offset: const Offset(0, 5),
+        ),
+      ];
+    } else if (isSecondary) {
+      gradient = null;
+      bgColor = AquaColors.glassSurface;
+      textColor = AquaColors.turquoise;
+      borderColor = AquaColors.slateBlue.withValues(alpha: 0.55);
+      shadows = [
+        BoxShadow(
+          color: AquaColors.shadowCard,
+          blurRadius: 10,
+          offset: const Offset(0, 3),
+        ),
+      ];
+    } else {
+      // ghost
+      gradient = null;
+      bgColor = Colors.transparent;
+      textColor = AquaColors.turquoise;
+      borderColor = AquaColors.glassBorderSubtle;
+      shadows = [];
+    }
+
+    final isDisabled = widget.onPressed == null && !widget.isLoading;
+
+    return AnimatedBuilder(
+      animation: _scaleAnim,
+      builder: (context, child) => Transform.scale(
+        scale: _scaleAnim.value,
+        child: child,
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(27),
-          onTap: isLoading ? null : onPressed,
-          child: Center(
-            child: isLoading
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (icon != null) ...[
-                        Icon(
-                          icon,
-                          size: 18,
-                          color: isPrimary ? Colors.white : AquaColors.icyBlue,
+      child: GestureDetector(
+        onTapDown: (_) {
+          if (!isDisabled) _controller.forward();
+        },
+        onTapUp: (_) => _controller.reverse(),
+        onTapCancel: () => _controller.reverse(),
+        child: Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+            gradient: isDisabled ? null : gradient,
+            color: isDisabled ? AquaColors.platinum : (gradient == null ? bgColor : null),
+            border: Border.all(
+              color: isDisabled ? AquaColors.glassBorderSubtle : borderColor,
+              width: 1,
+            ),
+            boxShadow: isDisabled ? [] : shadows,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              onTap: widget.isLoading ? null : widget.onPressed,
+              splashColor: Colors.white.withValues(alpha: 0.15),
+              highlightColor: Colors.white.withValues(alpha: 0.08),
+              child: Center(
+                child: widget.isLoading
+                    ? SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            isPrimary ? Colors.white : AquaColors.turquoise,
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                      ],
-                      Text(
-                        text,
-                        style: GoogleFonts.montserrat(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.2,
-                        ),
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (widget.icon != null) ...[
+                            Icon(
+                              widget.icon,
+                              size: 18,
+                              color: isDisabled
+                                  ? AquaColors.textMuted
+                                  : textColor,
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          Text(
+                            widget.text,
+                            style: GoogleFonts.montserrat(
+                              color: isDisabled
+                                  ? AquaColors.textMuted
+                                  : textColor,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+              ),
+            ),
           ),
         ),
       ),

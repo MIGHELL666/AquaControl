@@ -1,3 +1,5 @@
+import 'dart:ui' show Offset;
+
 enum DispenserStatus {
   supplied,
   pending,
@@ -64,6 +66,323 @@ class ZoneItem {
   int get suppliedCount => dispensers.where((d) => d.isSupplied).length;
   int get pendingCount => dispensers.where((d) => !d.isSupplied).length;
   bool get isFullySupplied => pendingCount == 0;
+  int get totalBottles => dispensers.fold(0, (sum, d) => sum + d.bottleCount);
+}
+
+/// Registro detallado de un abastecimiento o reabastecimiento con firma
+class SupplyRecord {
+  final String id;
+  final String dispenserId;
+  final String zoneName;
+  final int bottles;
+  final DateTime timestamp;
+  final String workerName;
+  final bool isResupply;
+  final String recipientName;
+  final List<Offset>? signaturePoints;
+
+  const SupplyRecord({
+    required this.id,
+    required this.dispenserId,
+    required this.zoneName,
+    required this.bottles,
+    required this.timestamp,
+    required this.workerName,
+    required this.isResupply,
+    required this.recipientName,
+    this.signaturePoints,
+  });
+
+  String get dateFormatted =>
+      '${timestamp.day.toString().padLeft(2, '0')}/${timestamp.month.toString().padLeft(2, '0')}/${timestamp.year}';
+
+  String get timeFormatted =>
+      '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+}
+
+/// Historial global de abastecimientos y reabastecimientos
+final List<SupplyRecord> kSupplyRecords = [
+  SupplyRecord(
+    id: 'SR-101',
+    dispenserId: '#023',
+    zoneName: 'Producción',
+    bottles: 2,
+    timestamp: DateTime.now().subtract(const Duration(hours: 1, minutes: 15)),
+    workerName: 'Juan Pérez',
+    isResupply: false,
+    recipientName: 'Ing. Roberto Méndez',
+  ),
+  SupplyRecord(
+    id: 'SR-102',
+    dispenserId: '#026',
+    zoneName: 'Producción',
+    bottles: 2,
+    timestamp: DateTime.now().subtract(const Duration(hours: 2, minutes: 30)),
+    workerName: 'Juan Pérez',
+    isResupply: true,
+    recipientName: 'Mariana Silva',
+  ),
+  SupplyRecord(
+    id: 'SR-103',
+    dispenserId: '#001',
+    zoneName: 'Calidad',
+    bottles: 2,
+    timestamp: DateTime.now().subtract(const Duration(hours: 4, minutes: 10)),
+    workerName: 'Carlos López',
+    isResupply: false,
+    recipientName: 'Dr. Alejandro Ruiz',
+  ),
+  SupplyRecord(
+    id: 'SR-104',
+    dispenserId: '#005',
+    zoneName: 'Almacén',
+    bottles: 3,
+    timestamp: DateTime.now().subtract(const Duration(days: 1, hours: 2)),
+    workerName: 'Pedro García',
+    isResupply: false,
+    recipientName: 'Laura Torres',
+  ),
+  SupplyRecord(
+    id: 'SR-105',
+    dispenserId: '#007',
+    zoneName: 'Almacén',
+    bottles: 2,
+    timestamp: DateTime.now().subtract(const Duration(days: 1, hours: 5)),
+    workerName: 'Juan Pérez',
+    isResupply: true,
+    recipientName: 'Carlos Mendoza',
+  ),
+  SupplyRecord(
+    id: 'SR-106',
+    dispenserId: '#013',
+    zoneName: 'Taller',
+    bottles: 2,
+    timestamp: DateTime.now().subtract(const Duration(days: 2, hours: 3)),
+    workerName: 'Carlos López',
+    isResupply: false,
+    recipientName: 'Esteban Morales',
+  ),
+  SupplyRecord(
+    id: 'SR-107',
+    dispenserId: '#018',
+    zoneName: 'Oficinas',
+    bottles: 2,
+    timestamp: DateTime.now().subtract(const Duration(days: 3, hours: 1)),
+    workerName: 'Pedro García',
+    isResupply: true,
+    recipientName: 'Sofía Valenzuela',
+  ),
+  SupplyRecord(
+    id: 'SR-108',
+    dispenserId: '#025',
+    zoneName: 'Producción',
+    bottles: 3,
+    timestamp: DateTime.now().subtract(const Duration(days: 4, hours: 6)),
+    workerName: 'Juan Pérez',
+    isResupply: false,
+    recipientName: 'Ing. Roberto Méndez',
+  ),
+];
+
+/// Modelo de Empresa Cliente
+class ClientItem {
+  final String id;
+  final String companyName;
+  final String contactPerson;
+  final String phone;
+  final String email;
+  final String address;
+  final int activeDispensers;
+  final String deliveryFrequency;
+  final String status;
+  final String notes;
+
+  const ClientItem({
+    required this.id,
+    required this.companyName,
+    required this.contactPerson,
+    required this.phone,
+    required this.email,
+    required this.address,
+    this.activeDispensers = 5,
+    this.deliveryFrequency = 'Semanal',
+    this.status = 'Activo',
+    this.notes = '',
+  });
+}
+
+/// Catálogo de empresas clientes
+final List<ClientItem> kDefaultClients = [
+  const ClientItem(
+    id: 'CLI-001',
+    companyName: 'Bimbo Planta Norte',
+    contactPerson: 'Lic. Fernando Garza',
+    phone: '55 4123 8900',
+    email: 'compras@bimbo-norte.com',
+    address: 'Parque Industrial Las Américas #140',
+    activeDispensers: 12,
+    deliveryFrequency: 'Diario',
+    status: 'Activo',
+    notes: 'Requiere entrega a las 8:00 AM en puertas 2 y 4.',
+  ),
+  const ClientItem(
+    id: 'CLI-002',
+    companyName: 'Manufacturas Sigma',
+    contactPerson: 'Ing. Patricia Ortega',
+    phone: '55 8970 3341',
+    email: 'almacen@sigma-ind.mx',
+    address: 'Av. Las Industrias #520, Nave C',
+    activeDispensers: 8,
+    deliveryFrequency: 'Cada 2 días',
+    status: 'Activo',
+    notes: 'Revisar filtros de despachador #014 periódicamente.',
+  ),
+  const ClientItem(
+    id: 'CLI-003',
+    companyName: 'Hospital San José',
+    contactPerson: 'Dr. Alejandro Ruiz',
+    phone: '55 2290 1156',
+    email: 'suministros@hospitalsanjose.org',
+    address: 'Calzada Médica #890',
+    activeDispensers: 15,
+    deliveryFrequency: 'Diario',
+    status: 'Activo',
+    notes: 'Áreas de terapia intensiva y urgencias prioritarias.',
+  ),
+  const ClientItem(
+    id: 'CLI-004',
+    companyName: 'TechCorp Soluciones',
+    contactPerson: 'Ing. David Salinas',
+    phone: '55 7712 4433',
+    email: 'contacto@techcorp.com',
+    address: 'Corporativo Vía Verde Piso 6',
+    activeDispensers: 6,
+    deliveryFrequency: 'Semanal',
+    status: 'Activo',
+    notes: 'Acceso por recepción con gafete de visitante.',
+  ),
+  const ClientItem(
+    id: 'CLI-005',
+    companyName: 'Logística & Distribución Bajío',
+    contactPerson: 'Martín Escobedo',
+    phone: '55 6601 9922',
+    email: 'm.escobedo@bajiodist.com',
+    address: 'Carretera Federal Km 24',
+    activeDispensers: 9,
+    deliveryFrequency: 'Cada 2 días',
+    status: 'Activo',
+  ),
+];
+
+void addClient(ClientItem client) {
+  kDefaultClients.insert(0, client);
+}
+
+/// Modelo de Trabajador
+class WorkerItem {
+  final String id;
+  final String name;
+  final String employeeNumber;
+  final String phone;
+  final String email;
+  final String assignedZone;
+  final String shift;
+  final String status;
+  final List<String> assignedClients;
+
+  const WorkerItem({
+    required this.id,
+    required this.name,
+    required this.employeeNumber,
+    required this.phone,
+    required this.email,
+    required this.assignedZone,
+    this.shift = 'Matutino',
+    this.status = 'Activo',
+    this.assignedClients = const [],
+  });
+
+  WorkerItem copyWith({
+    String? id,
+    String? name,
+    String? employeeNumber,
+    String? phone,
+    String? email,
+    String? assignedZone,
+    String? shift,
+    String? status,
+    List<String>? assignedClients,
+  }) {
+    return WorkerItem(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      employeeNumber: employeeNumber ?? this.employeeNumber,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      assignedZone: assignedZone ?? this.assignedZone,
+      shift: shift ?? this.shift,
+      status: status ?? this.status,
+      assignedClients: assignedClients ?? this.assignedClients,
+    );
+  }
+}
+
+/// Catálogo de trabajadores
+final List<WorkerItem> kDefaultWorkers = [
+  const WorkerItem(
+    id: 'WRK-001',
+    name: 'Juan Pérez',
+    employeeNumber: 'EMP-1042',
+    phone: '55 1234 5678',
+    email: 'juan.perez@aquacontrol.com',
+    assignedZone: 'Producción',
+    shift: 'Matutino',
+    assignedClients: ['Bimbo Planta Norte', 'Manufacturas Sigma'],
+  ),
+  const WorkerItem(
+    id: 'WRK-002',
+    name: 'Carlos López',
+    employeeNumber: 'EMP-1045',
+    phone: '55 2345 6789',
+    email: 'carlos.lopez@aquacontrol.com',
+    assignedZone: 'Almacén',
+    shift: 'Vespertino',
+    assignedClients: ['Hospital San José'],
+  ),
+  const WorkerItem(
+    id: 'WRK-003',
+    name: 'Pedro García',
+    employeeNumber: 'EMP-1049',
+    phone: '55 3456 7890',
+    email: 'pedro.garcia@aquacontrol.com',
+    assignedZone: 'Calidad',
+    shift: 'Matutino',
+    assignedClients: ['TechCorp Soluciones', 'Logística & Distribución Bajío'],
+  ),
+  const WorkerItem(
+    id: 'WRK-004',
+    name: 'Miguel Hernández',
+    employeeNumber: 'EMP-1053',
+    phone: '55 4567 8901',
+    email: 'miguel.h@aquacontrol.com',
+    assignedZone: 'Oficinas',
+    shift: 'Mixto',
+    assignedClients: ['Bimbo Planta Norte'],
+  ),
+  const WorkerItem(
+    id: 'WRK-005',
+    name: 'Lucía Mendoza',
+    employeeNumber: 'EMP-1058',
+    phone: '55 5678 9012',
+    email: 'lucia.m@aquacontrol.com',
+    assignedZone: 'Taller',
+    shift: 'Matutino',
+    assignedClients: ['Hospital San José', 'Manufacturas Sigma'],
+  ),
+];
+
+void addWorker(WorkerItem worker) {
+  kDefaultWorkers.insert(0, worker);
 }
 
 bool deleteDispenser(String zoneName, String dispenserId) {
@@ -113,7 +432,13 @@ void addDispenser(String zoneName, DispenserItem newItem) {
   targetZone.dispensers.insert(0, newItem);
 }
 
-bool markDispenserSupplied(String dispenserId, int bottleCount) {
+bool markDispenserSupplied(
+  String dispenserId,
+  int bottleCount, {
+  String recipientName = 'Responsable de Zona',
+  List<Offset>? signaturePoints,
+  String workerName = 'Juan Pérez',
+}) {
   for (final zone in kDefaultZones) {
     final idx = zone.dispensers.indexWhere((d) => d.id.trim() == dispenserId.trim());
     if (idx != -1) {
@@ -124,10 +449,79 @@ bool markDispenserSupplied(String dispenserId, int bottleCount) {
         lastSupplyInfo: 'Hoy ${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')} • $bottleCount garrafones',
         alertMessage: '',
       );
+      kSupplyRecords.insert(
+        0,
+        SupplyRecord(
+          id: 'SR-${DateTime.now().millisecondsSinceEpoch}',
+          dispenserId: dispenserId,
+          zoneName: zone.name,
+          bottles: bottleCount,
+          timestamp: DateTime.now(),
+          workerName: workerName,
+          isResupply: false,
+          recipientName: recipientName,
+          signaturePoints: signaturePoints,
+        ),
+      );
       return true;
     }
   }
   return false;
+}
+
+/// Reabastece un despachador sumando o actualizando garrafones en las rondas de trabajo
+bool resupplyDispenser(
+  String dispenserId,
+  int addedBottles, {
+  String recipientName = 'Responsable de Zona',
+  List<Offset>? signaturePoints,
+  String workerName = 'Juan Pérez',
+}) {
+  for (final zone in kDefaultZones) {
+    final idx = zone.dispensers.indexWhere((d) => d.id.trim() == dispenserId.trim());
+    if (idx != -1) {
+      final old = zone.dispensers[idx];
+      final newTotal = old.bottleCount + addedBottles;
+      zone.dispensers[idx] = old.copyWith(
+        status: DispenserStatus.supplied,
+        bottleCount: newTotal,
+        lastSupplyInfo: 'Reabastecido hoy ${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')} (+$addedBottles)',
+        alertMessage: '',
+      );
+      kSupplyRecords.insert(
+        0,
+        SupplyRecord(
+          id: 'SR-${DateTime.now().millisecondsSinceEpoch}',
+          dispenserId: dispenserId,
+          zoneName: zone.name,
+          bottles: addedBottles,
+          timestamp: DateTime.now(),
+          workerName: workerName,
+          isResupply: true,
+          recipientName: recipientName,
+          signaturePoints: signaturePoints,
+        ),
+      );
+      return true;
+    }
+  }
+  return false;
+}
+
+int getTotalDispensersCount() {
+  return kDefaultZones.fold(0, (sum, z) => sum + z.totalDispensers);
+}
+
+int getTotalSuppliedCount() {
+  return kDefaultZones.fold(0, (sum, z) => sum + z.suppliedCount);
+}
+
+int getTotalPendingCount() {
+  return kDefaultZones.fold(0, (sum, z) => sum + z.pendingCount);
+}
+
+int getTotalBottlesCount() {
+  return kDefaultZones.fold(0, (sum, z) => sum + z.totalBottles);
 }
 
 class ZoneDispenserEntry {

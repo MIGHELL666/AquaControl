@@ -15,16 +15,26 @@ class AquaBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF091438).withValues(alpha: 0.85),
-        border: const Border(
-          top: BorderSide(color: AquaColors.glassBorderSubtle, width: 1),
-        ),
-      ),
-      child: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AquaColors.glassSurfaceLight,
+            border: Border(
+              top: BorderSide(
+                color: AquaColors.glassBorder,
+                width: 1,
+              ),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AquaColors.shadowFloat,
+                blurRadius: 20,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
           child: SafeArea(
             top: false,
             child: SizedBox(
@@ -32,10 +42,10 @@ class AquaBottomNavBar extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildNavItem(0, Icons.home_rounded, 'Inicio'),
-                  _buildNavItem(1, Icons.location_on_outlined, 'Puntos'),
-                  _buildNavItem(2, Icons.access_time_rounded, 'Historial'),
-                  _buildNavItem(3, Icons.grid_view_rounded, 'Más'),
+                  _buildNavItem(context, 0, Icons.home_rounded, 'Inicio'),
+                  _buildNavItem(context, 1, Icons.location_on_rounded, 'Puntos'),
+                  _buildNavItem(context, 2, Icons.access_time_rounded, 'Historial'),
+                  _buildNavItem(context, 3, Icons.grid_view_rounded, 'Más'),
                 ],
               ),
             ),
@@ -45,33 +55,61 @@ class AquaBottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
+  Widget _buildNavItem(
+    BuildContext context,
+    int index,
+    IconData icon,
+    String label,
+  ) {
     final isSelected = currentIndex == index;
-    final color = isSelected ? AquaColors.cornflowerBlue : AquaColors.textMuted;
 
     return Expanded(
       child: InkWell(
         onTap: () => onTap(index),
-        splashColor: Colors.transparent,
+        splashColor: AquaColors.turquoise.withValues(alpha: 0.08),
         highlightColor: Colors.transparent,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: color,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.montserrat(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: color,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSelected ? 16 : 0,
+                  vertical: isSelected ? 4 : 0,
+                ),
+                decoration: isSelected
+                    ? BoxDecoration(
+                        color: AquaColors.turquoise.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                      )
+                    : null,
+                child: Icon(
+                  icon,
+                  size: 22,
+                  color: isSelected
+                      ? AquaColors.turquoise
+                      : AquaColors.textMuted,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: GoogleFonts.montserrat(
+                  fontSize: 10,
+                  fontWeight:
+                      isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected
+                      ? AquaColors.turquoise
+                      : AquaColors.textMuted,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

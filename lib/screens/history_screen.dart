@@ -34,42 +34,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
   DateTime _selectedDate = DateTime.now();
 
   final List<HistoryEntry> _entries = const [
-    HistoryEntry(
-      time: '14:37',
-      location: 'Producción',
-      user: 'Juan Pérez',
-      bottles: 2,
-    ),
-    HistoryEntry(
-      time: '14:25',
-      location: 'Almacén',
-      user: 'Carlos López',
-      bottles: 2,
-    ),
-    HistoryEntry(
-      time: '14:10',
-      location: 'Taller',
-      user: 'Juan Pérez',
-      bottles: 1,
-    ),
-    HistoryEntry(
-      time: '13:52',
-      location: 'Oficinas',
-      user: 'Carlos López',
-      bottles: 2,
-    ),
-    HistoryEntry(
-      time: '13:20',
-      location: 'Mantenimiento',
-      user: 'Pedro García',
-      bottles: 1,
-    ),
-    HistoryEntry(
-      time: '12:48',
-      location: 'Calidad',
-      user: 'Juan Pérez',
-      bottles: 2,
-    ),
+    HistoryEntry(time: '14:37', location: 'Producción', user: 'Juan Pérez', bottles: 2),
+    HistoryEntry(time: '14:25', location: 'Almacén', user: 'Carlos López', bottles: 2),
+    HistoryEntry(time: '14:10', location: 'Taller', user: 'Juan Pérez', bottles: 1),
+    HistoryEntry(time: '13:52', location: 'Oficinas', user: 'Carlos López', bottles: 2),
+    HistoryEntry(time: '13:20', location: 'Mantenimiento', user: 'Pedro García', bottles: 1),
+    HistoryEntry(time: '12:48', location: 'Calidad', user: 'Juan Pérez', bottles: 2),
   ];
 
   Future<void> _pickDate() async {
@@ -80,10 +50,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
       lastDate: DateTime(2030),
       builder: (context, child) {
         return Theme(
-          data: ThemeData.dark().copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AquaColors.cornflowerBlue,
-              surface: AquaColors.surfaceNavy,
+          data: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AquaColors.turquoise,
+              surface: AquaColors.iceBlue,
+              onSurface: AquaColors.textPrimary,
             ),
           ),
           child: child!,
@@ -97,6 +68,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final totalBottles = _entries.fold<int>(0, (sum, e) => sum + e.bottles);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
       child: Column(
@@ -107,91 +80,155 @@ class _HistoryScreenState extends State<HistoryScreen> {
             children: [
               if (widget.showBackButton) ...[
                 IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: AquaColors.icyBlue),
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    size: 18,
+                    color: AquaColors.textSecondary,
+                  ),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 const SizedBox(width: 4),
               ],
-              Text(
-                'Historial de abastecimientos',
-                style: GoogleFonts.montserrat(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Date Filter Selector Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0x283D518C),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AquaColors.glassBorderSubtle, width: 1),
-                ),
+              Expanded(
                 child: Text(
-                  'Hoy',
+                  'Historial',
                   style: GoogleFonts.montserrat(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AquaColors.textPrimary,
                   ),
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.calendar_today_outlined, size: 20, color: AquaColors.icyBlue),
-                onPressed: _pickDate,
+              // Selector de fecha
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _pickDate,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.80),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AquaColors.glassBorder),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AquaColors.shadowCard,
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.calendar_today_rounded,
+                          size: 14,
+                          color: AquaColors.turquoise,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Hoy',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AquaColors.turquoise,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 14),
+
+          // Tarjeta resumen del día
+          GlassCard(
+            borderRadius: 16,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            child: Row(
+              children: [
+                _buildSummaryChip(
+                  icon: Icons.water_drop_rounded,
+                  value: '$totalBottles',
+                  label: 'Garrafones',
+                  color: AquaColors.turquoise,
+                ),
+                _buildDivider(),
+                _buildSummaryChip(
+                  icon: Icons.check_circle_rounded,
+                  value: '${_entries.length}',
+                  label: 'Entregas',
+                  color: AquaColors.statusSupplied,
+                ),
+                _buildDivider(),
+                _buildSummaryChip(
+                  icon: Icons.group_rounded,
+                  value: '${_entries.map((e) => e.user).toSet().length}',
+                  label: 'Trabajadores',
+                  color: AquaColors.slateBlue,
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 16),
 
-          // Entries List
+          // Etiqueta de sección
+          Text(
+            'Actividad del día',
+            style: GoogleFonts.montserrat(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AquaColors.textSecondary,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Lista de entradas
           Expanded(
             child: ListView.separated(
               itemCount: _entries.length,
-              separatorBuilder: (_, i) => const SizedBox(height: 10),
+              separatorBuilder: (_, i) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final entry = _entries[index];
                 return GlassCard(
-                  borderRadius: 16,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  backgroundColor: const Color(0x221F356B),
-                  borderColor: AquaColors.glassBorderSubtle,
+                  borderRadius: 14,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => PointDetailScreen(pointName: entry.location),
+                        builder: (_) =>
+                            PointDetailScreen(pointName: entry.location),
                       ),
                     );
                   },
                   child: Row(
                     children: [
-                      // Time pill
+                      // Pill de hora
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: const Color(0x334468C7),
+                          color: AquaColors.turquoise.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           entry.time,
                           style: GoogleFonts.montserrat(
                             fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            color: AquaColors.turquoise,
                           ),
                         ),
                       ),
                       const SizedBox(width: 14),
 
-                      // Location & User
+                      // Localización y usuario
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,7 +238,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               style: GoogleFonts.montserrat(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                color: AquaColors.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -209,20 +246,30 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               entry.user,
                               style: GoogleFonts.montserrat(
                                 fontSize: 11,
-                                color: AquaColors.textSecondary,
+                                color: AquaColors.textMuted,
                               ),
                             ),
                           ],
                         ),
                       ),
 
-                      // Bottle count
-                      Text(
-                        '${entry.bottles} ${entry.bottles == 1 ? 'garrafón' : 'garrafones'}',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: AquaColors.textSecondary,
+                      // Contador de garrafones
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AquaColors.statusSuppliedBg,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                              color: AquaColors.statusSuppliedBorder),
+                        ),
+                        child: Text(
+                          '${entry.bottles} ${entry.bottles == 1 ? 'garrafón' : 'garrafones'}',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AquaColors.statusSupplied,
+                          ),
                         ),
                       ),
                     ],
@@ -233,6 +280,45 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSummaryChip({
+    required IconData icon,
+    required String value,
+    required String label,
+    required Color color,
+  }) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: GoogleFonts.montserrat(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: AquaColors.textPrimary,
+            ),
+          ),
+          Text(
+            label,
+            style: GoogleFonts.montserrat(
+              fontSize: 10,
+              color: AquaColors.textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      width: 1,
+      height: 36,
+      color: AquaColors.platinum,
     );
   }
 }

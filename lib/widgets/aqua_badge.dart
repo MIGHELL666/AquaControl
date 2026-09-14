@@ -17,26 +17,123 @@ class AquaBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSupplied = status == SupplyStatus.supplied;
-    final color = isSupplied ? AquaColors.statusSupplied : AquaColors.statusPending;
+
+    final bgColor = isSupplied
+        ? AquaColors.statusSuppliedBg
+        : AquaColors.statusPendingBg;
+    final borderColor = isSupplied
+        ? AquaColors.statusSuppliedBorder
+        : AquaColors.statusPendingBorder;
+    final textColor = isSupplied
+        ? AquaColors.statusSupplied
+        : AquaColors.statusPending;
+    final icon = isSupplied
+        ? Icons.check_circle_rounded
+        : Icons.schedule_rounded;
     final text = customText ?? (isSupplied ? 'Abastecido' : 'Pendiente');
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: isSupplied ? AquaColors.statusSuppliedBg : AquaColors.statusPendingBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withValues(alpha: 0.4),
-          width: 0.8,
-        ),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor, width: 1),
       ),
-      child: Text(
-        text,
-        style: GoogleFonts.montserrat(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: textColor),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: GoogleFonts.montserrat(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: textColor,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Badge genérico de estado con icono
+class AquaStatusBadge extends StatelessWidget {
+  final String text;
+  final Color color;
+  final Color backgroundColor;
+  final Color borderColor;
+  final IconData? icon;
+
+  const AquaStatusBadge({
+    super.key,
+    required this.text,
+    required this.color,
+    required this.backgroundColor,
+    required this.borderColor,
+    this.icon,
+  });
+
+  factory AquaStatusBadge.info(String text) => AquaStatusBadge(
+        text: text,
+        color: AquaColors.turquoise,
+        backgroundColor: AquaColors.statusInfoBg,
+        borderColor: AquaColors.turquoise.withValues(alpha: 0.4),
+        icon: Icons.info_outline_rounded,
+      );
+
+  factory AquaStatusBadge.success(String text) => AquaStatusBadge(
+        text: text,
+        color: AquaColors.statusSupplied,
+        backgroundColor: AquaColors.statusSuppliedBg,
+        borderColor: AquaColors.statusSuppliedBorder,
+        icon: Icons.check_circle_outline_rounded,
+      );
+
+  factory AquaStatusBadge.warning(String text) => AquaStatusBadge(
+        text: text,
+        color: AquaColors.statusPending,
+        backgroundColor: AquaColors.statusPendingBg,
+        borderColor: AquaColors.statusPendingBorder,
+        icon: Icons.warning_amber_rounded,
+      );
+
+  factory AquaStatusBadge.error(String text) => AquaStatusBadge(
+        text: text,
+        color: AquaColors.statusError,
+        backgroundColor: AquaColors.statusErrorBg,
+        borderColor: AquaColors.statusErrorBorder,
+        icon: Icons.error_outline_rounded,
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 11, color: color),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            text,
+            style: GoogleFonts.montserrat(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: color,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
       ),
     );
   }

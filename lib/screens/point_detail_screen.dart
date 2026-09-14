@@ -7,6 +7,7 @@ import '../widgets/aqua_badge.dart';
 import '../widgets/aqua_button.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/glass_card.dart';
+import 'dispenser_detail_screen.dart';
 
 class PointDetailScreen extends StatefulWidget {
   final String pointName;
@@ -97,7 +98,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                     icon: const Icon(
                       Icons.arrow_back_ios_new,
                       size: 18,
-                      color: AquaColors.icyBlue,
+                      color: AquaColors.turquoise,
                     ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
@@ -110,14 +111,15 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                           'Zona: ${zone.name}',
                           style: GoogleFonts.montserrat(
                             fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            color: AquaColors.textPrimary,
                           ),
                         ),
                         Text(
                           zone.subtitle,
                           style: GoogleFonts.montserrat(
                             fontSize: 11,
+                            fontWeight: FontWeight.w500,
                             color: AquaColors.textSecondary,
                           ),
                           maxLines: 1,
@@ -148,8 +150,8 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                         : 'Despachadores (${zone.totalDispensers})',
                     style: GoogleFonts.montserrat(
                       fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      color: AquaColors.textPrimary,
                     ),
                   ),
                   InkWell(
@@ -166,15 +168,15 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                 ? Icons.view_list_rounded
                                 : Icons.history_rounded,
                             size: 16,
-                            color: AquaColors.icyBlue,
+                            color: AquaColors.turquoise,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             _showHistory ? 'Ver despachadores' : 'Ver historial',
                             style: GoogleFonts.montserrat(
                               fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AquaColors.icyBlue,
+                              fontWeight: FontWeight.w600,
+                              color: AquaColors.turquoise,
                             ),
                           ),
                         ],
@@ -221,6 +223,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                               style: GoogleFonts.montserrat(
                                 color: AquaColors.textSecondary,
                                 fontSize: 13,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           )
@@ -250,28 +253,38 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
     return InkWell(
       onTap: () => setState(() => _selectedFilter = filterValue),
       borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
           color: isSelected
-              ? (accentColor?.withValues(alpha: 0.25) ?? AquaColors.cornflowerBlue)
-              : const Color(0x243D518C),
+              ? (accentColor ?? AquaColors.turquoise)
+              : AquaColors.glacier.withValues(alpha: 0.35),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? (accentColor ?? Colors.white.withValues(alpha: 0.4))
-                : AquaColors.glassBorderSubtle,
-            width: 1,
+                ? (accentColor ?? AquaColors.turquoise)
+                : AquaColors.platinum,
+            width: 1.2,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: (accentColor ?? AquaColors.turquoise).withValues(alpha: 0.25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           text,
           style: GoogleFonts.montserrat(
             fontSize: 11,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             color: isSelected
-                ? (accentColor ?? Colors.white)
-                : AquaColors.textSecondary,
+                ? Colors.white
+                : AquaColors.textPrimary,
           ),
         ),
       ),
@@ -289,11 +302,11 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
       borderRadius: 16,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       backgroundColor: isSupplied
-          ? const Color(0x1F1E3166)
-          : const Color(0x2E4A2828), // Subtle alert hue if pending
+          ? Colors.white.withValues(alpha: 0.85)
+          : AquaColors.statusPendingBg.withValues(alpha: 0.12),
       borderColor: isSupplied
-          ? AquaColors.glassBorderSubtle
-          : AquaColors.statusPending.withValues(alpha: 0.35),
+          ? AquaColors.platinum
+          : AquaColors.statusPending.withValues(alpha: 0.4),
       onTap: () {
         _showDispenserDetailsModal(context, dispenser, zoneName);
       },
@@ -306,17 +319,22 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isSupplied
-                  ? const Color(0x28496EC7)
-                  : AquaColors.statusPending.withValues(alpha: 0.2),
+                  ? AquaColors.statusSuppliedBg
+                  : AquaColors.statusPendingBg,
+              border: Border.all(
+                color: isSupplied
+                    ? AquaColors.statusSuppliedBorder
+                    : AquaColors.statusPendingBorder,
+              ),
             ),
             child: Icon(
               isSupplied
-                  ? Icons.water_drop_outlined
+                  ? Icons.water_drop_rounded
                   : Icons.warning_amber_rounded,
               color: isSupplied
-                  ? AquaColors.icyBlue
+                  ? AquaColors.statusSupplied
                   : AquaColors.statusPending,
-              size: 19,
+              size: 20,
             ),
           ),
           const SizedBox(width: 12),
@@ -329,20 +347,25 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      'Despachador ${dispenser.id}',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                    Flexible(
+                      child: Text(
+                        'Despachador ${dispenser.id}',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AquaColors.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         '• ${dispenser.brand} ${dispenser.model}',
                         style: GoogleFonts.montserrat(
                           fontSize: 11,
+                          fontWeight: FontWeight.w500,
                           color: AquaColors.textSecondary,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -360,9 +383,9 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                           : 'Falta abastecer',
                   style: GoogleFonts.montserrat(
                     fontSize: 11,
-                    fontWeight: isSupplied ? FontWeight.w400 : FontWeight.w500,
+                    fontWeight: isSupplied ? FontWeight.w500 : FontWeight.w600,
                     color: isSupplied
-                        ? AquaColors.textSecondary
+                        ? AquaColors.textMuted
                         : AquaColors.statusPending,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -386,15 +409,31 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
             icon: const Icon(
               Icons.more_vert_rounded,
               size: 18,
-              color: AquaColors.textMuted,
+              color: AquaColors.slateBlue,
             ),
-            color: const Color(0xFF16254A),
+            color: Colors.white,
+            elevation: 4,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
-              side: const BorderSide(color: AquaColors.glassBorderSubtle),
+              side: const BorderSide(color: AquaColors.platinum),
             ),
-            onSelected: (value) {
-              if (value == 'edit') {
+            onSelected: (value) async {
+              if (value == 'supply') {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => DispenserDetailScreen(
+                      dispenserId: dispenser.id,
+                      pointName: zoneName,
+                      brand: dispenser.brand,
+                      model: dispenser.model,
+                      serialNumber: dispenser.serialNumber,
+                      isSupplied: dispenser.isSupplied,
+                      alertMessage: dispenser.alertMessage,
+                    ),
+                  ),
+                );
+                setState(() {});
+              } else if (value == 'edit') {
                 _showEditDispenserModal(context, dispenser, zoneName);
               } else if (value == 'delete') {
                 _confirmDeleteDispenser(context, dispenser, zoneName);
@@ -402,14 +441,39 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
             },
             itemBuilder: (context) => [
               PopupMenuItem(
+                value: 'supply',
+                child: Row(
+                  children: [
+                    Icon(
+                      dispenser.isSupplied ? Icons.sync_rounded : Icons.water_drop_rounded,
+                      size: 16,
+                      color: AquaColors.turquoise,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      dispenser.isSupplied ? 'Reabastecer' : 'Abastecer',
+                      style: GoogleFonts.montserrat(
+                        color: AquaColors.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
                 value: 'edit',
                 child: Row(
                   children: [
-                    const Icon(Icons.edit_outlined, size: 16, color: AquaColors.icyBlue),
+                    const Icon(Icons.edit_outlined, size: 16, color: AquaColors.turquoise),
                     const SizedBox(width: 10),
                     Text(
                       'Editar',
-                      style: GoogleFonts.montserrat(color: Colors.white, fontSize: 13),
+                      style: GoogleFonts.montserrat(
+                        color: AquaColors.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -418,11 +482,15 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                 value: 'delete',
                 child: Row(
                   children: [
-                    const Icon(Icons.delete_outline_rounded, size: 16, color: Color(0xFFE55353)),
+                    const Icon(Icons.delete_outline_rounded, size: 16, color: AquaColors.statusError),
                     const SizedBox(width: 10),
                     Text(
                       'Eliminar',
-                      style: GoogleFonts.montserrat(color: const Color(0xFFE55353), fontSize: 13),
+                      style: GoogleFonts.montserrat(
+                        color: AquaColors.statusError,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -449,18 +517,13 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           decoration: const BoxDecoration(
-            color: Color(0xFF132247),
+            color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
-            border: Border(
-              top: BorderSide(color: Color(0x334468C7), width: 1),
-              left: BorderSide(color: Color(0x334468C7), width: 1),
-              right: BorderSide(color: Color(0x334468C7), width: 1),
-            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black54,
-                blurRadius: 20,
-                offset: Offset(0, -4),
+                color: AquaColors.shadowFloat,
+                blurRadius: 24,
+                offset: Offset(0, -6),
               ),
             ],
           ),
@@ -475,7 +538,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                     width: 38,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.3),
+                      color: AquaColors.platinum,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -491,15 +554,20 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: isSupplied
-                            ? const Color(0x28496EC7)
-                            : AquaColors.statusPending.withValues(alpha: 0.2),
+                            ? AquaColors.statusSuppliedBg
+                            : AquaColors.statusPendingBg,
+                        border: Border.all(
+                          color: isSupplied
+                              ? AquaColors.statusSuppliedBorder
+                              : AquaColors.statusPendingBorder,
+                        ),
                       ),
                       child: Icon(
                         isSupplied
-                            ? Icons.water_drop_outlined
+                            ? Icons.water_drop_rounded
                             : Icons.warning_amber_rounded,
                         color: isSupplied
-                            ? AquaColors.icyBlue
+                            ? AquaColors.statusSupplied
                             : AquaColors.statusPending,
                         size: 22,
                       ),
@@ -514,13 +582,14 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                             style: GoogleFonts.montserrat(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                              color: AquaColors.textPrimary,
                             ),
                           ),
                           Text(
                             'Zona $zoneName',
                             style: GoogleFonts.montserrat(
                               fontSize: 12,
+                              fontWeight: FontWeight.w500,
                               color: AquaColors.textSecondary,
                             ),
                           ),
@@ -539,18 +608,16 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                 GlassCard(
                   borderRadius: 16,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  backgroundColor: const Color(0x2820356C),
-                  borderColor: AquaColors.glassBorderSubtle,
                   child: Column(
                     children: [
                       _buildModalRow('Área / Zona:', zoneName),
-                      const Divider(color: Color(0x1AFFFFFF), height: 16),
+                      const Divider(color: AquaColors.platinum, height: 16),
                       _buildModalRow('Marca:', dispenser.brand),
-                      const Divider(color: Color(0x1AFFFFFF), height: 16),
+                      const Divider(color: AquaColors.platinum, height: 16),
                       _buildModalRow('Modelo:', dispenser.model),
-                      const Divider(color: Color(0x1AFFFFFF), height: 16),
+                      const Divider(color: AquaColors.platinum, height: 16),
                       _buildModalRow('Número de Serie:', dispenser.serialNumber),
-                      const Divider(color: Color(0x1AFFFFFF), height: 16),
+                      const Divider(color: AquaColors.platinum, height: 16),
                       _buildModalRow(
                         'Estado del equipo:',
                         isSupplied ? 'Abastecido' : 'Falta abastecer',
@@ -568,10 +635,10 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                   borderRadius: 14,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   backgroundColor: isSupplied
-                      ? const Color(0x1F1E3166)
-                      : const Color(0x2E4A2828),
+                      ? Colors.white
+                      : AquaColors.statusPendingBg.withValues(alpha: 0.12),
                   borderColor: isSupplied
-                      ? AquaColors.glassBorderSubtle
+                      ? AquaColors.platinum
                       : AquaColors.statusPending.withValues(alpha: 0.35),
                   child: Row(
                     children: [
@@ -580,7 +647,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                             ? Icons.schedule_rounded
                             : Icons.error_outline_rounded,
                         color: isSupplied
-                            ? AquaColors.icyBlue
+                            ? AquaColors.turquoise
                             : AquaColors.statusPending,
                         size: 20,
                       ),
@@ -595,9 +662,9 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                   : 'Alerta operativa',
                               style: GoogleFonts.montserrat(
                                 fontSize: 11,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
                                 color: isSupplied
-                                    ? AquaColors.icyBlue
+                                    ? AquaColors.turquoise
                                     : AquaColors.statusPending,
                               ),
                             ),
@@ -610,7 +677,8 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                       : 'Requiere abastecimiento'),
                               style: GoogleFonts.montserrat(
                                 fontSize: 12,
-                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                color: AquaColors.textPrimary,
                               ),
                             ),
                           ],
@@ -620,6 +688,31 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 18),
+
+                // Primary Action: Abastecer / Reabastecer con firma
+                AquaButton(
+                  text: isSupplied ? 'Reabastecer en ronda' : 'Abastecer despachador',
+                  icon: isSupplied ? Icons.sync_rounded : Icons.water_drop_rounded,
+                  height: 48,
+                  onPressed: () async {
+                    Navigator.of(ctx).pop();
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => DispenserDetailScreen(
+                          dispenserId: dispenser.id,
+                          pointName: zoneName,
+                          brand: dispenser.brand,
+                          model: dispenser.model,
+                          serialNumber: dispenser.serialNumber,
+                          isSupplied: dispenser.isSupplied,
+                          alertMessage: dispenser.alertMessage,
+                        ),
+                      ),
+                    );
+                    setState(() {});
+                  },
+                ),
+                const SizedBox(height: 12),
 
                 // Action Buttons: Editar & Eliminar
                 Row(
@@ -682,8 +775,6 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
           child: GlassCard(
             borderRadius: 24,
             padding: const EdgeInsets.all(22),
-            backgroundColor: const Color(0xFF132247),
-            borderColor: const Color(0xFFE55353).withValues(alpha: 0.35),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -692,11 +783,11 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                   height: 52,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFFE55353).withValues(alpha: 0.15),
+                    color: AquaColors.statusErrorBg,
                   ),
                   child: const Icon(
                     Icons.delete_forever_rounded,
-                    color: Color(0xFFE55353),
+                    color: AquaColors.statusError,
                     size: 28,
                   ),
                 ),
@@ -706,7 +797,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                   style: GoogleFonts.montserrat(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AquaColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -743,7 +834,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                             setState(() {});
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                backgroundColor: const Color(0xFF1E3166),
+                                backgroundColor: AquaColors.turquoise,
                                 behavior: SnackBarBehavior.floating,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
@@ -752,7 +843,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                   children: [
                                     const Icon(
                                       Icons.check_circle_rounded,
-                                      color: AquaColors.statusSupplied,
+                                      color: Colors.white,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 10),
@@ -761,6 +852,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                       style: GoogleFonts.montserrat(
                                         color: Colors.white,
                                         fontSize: 13,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ],
@@ -822,13 +914,15 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                 decoration: const BoxDecoration(
-                  color: Color(0xFF132247),
+                  color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
-                  border: Border(
-                    top: BorderSide(color: Color(0x334468C7), width: 1),
-                    left: BorderSide(color: Color(0x334468C7), width: 1),
-                    right: BorderSide(color: Color(0x334468C7), width: 1),
-                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AquaColors.shadowFloat,
+                      blurRadius: 24,
+                      offset: Offset(0, -6),
+                    ),
+                  ],
                 ),
                 child: SafeArea(
                   child: SingleChildScrollView(
@@ -843,7 +937,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                               width: 38,
                               height: 4,
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.3),
+                                color: AquaColors.platinum,
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -857,11 +951,11 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                 style: GoogleFonts.montserrat(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.white,
+                                  color: AquaColors.textPrimary,
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.close, color: AquaColors.icyBlue, size: 20),
+                                icon: const Icon(Icons.close, color: AquaColors.textSecondary, size: 20),
                                 onPressed: () => Navigator.of(editCtx).pop(),
                               ),
                             ],
@@ -872,7 +966,11 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                           _buildInputLabel('Número / Código:'),
                           TextFormField(
                             controller: idController,
-                            style: GoogleFonts.montserrat(color: Colors.white, fontSize: 13),
+                            style: GoogleFonts.montserrat(
+                              color: AquaColors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
                             decoration: _inputDecoration('Ej. #023'),
                             validator: (v) => v == null || v.trim().isEmpty ? 'Ingresa el código' : null,
                           ),
@@ -880,17 +978,31 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
 
                           // Zona
                           _buildInputLabel('Zona / Área:'),
-                          DropdownButtonFormField<String>(
-                            initialValue: availableZones.contains(selectedZone) ? selectedZone : availableZones.first,
-                            dropdownColor: const Color(0xFF192C59),
-                            style: GoogleFonts.montserrat(color: Colors.white, fontSize: 13),
-                            decoration: _inputDecoration(''),
-                            items: availableZones.map((z) {
-                              return DropdownMenuItem(value: z, child: Text(z));
-                            }).toList(),
-                            onChanged: (val) {
-                              if (val != null) setModalState(() => selectedZone = val);
-                            },
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AquaColors.platinum),
+                            ),
+                            child: DropdownButtonFormField<String>(
+                              initialValue: availableZones.contains(selectedZone) ? selectedZone : availableZones.first,
+                              dropdownColor: Colors.white,
+                              style: GoogleFonts.montserrat(
+                                color: AquaColors.textPrimary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              ),
+                              items: availableZones.map((z) {
+                                return DropdownMenuItem(value: z, child: Text(z));
+                              }).toList(),
+                              onChanged: (val) {
+                                if (val != null) setModalState(() => selectedZone = val);
+                              },
+                            ),
                           ),
                           const SizedBox(height: 12),
 
@@ -898,7 +1010,11 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                           _buildInputLabel('Marca:'),
                           TextFormField(
                             controller: brandController,
-                            style: GoogleFonts.montserrat(color: Colors.white, fontSize: 13),
+                            style: GoogleFonts.montserrat(
+                              color: AquaColors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
                             decoration: _inputDecoration('Ej. EcoWater, Oasis'),
                             validator: (v) => v == null || v.trim().isEmpty ? 'Ingresa la marca' : null,
                           ),
@@ -908,7 +1024,11 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                           _buildInputLabel('Modelo:'),
                           TextFormField(
                             controller: modelController,
-                            style: GoogleFonts.montserrat(color: Colors.white, fontSize: 13),
+                            style: GoogleFonts.montserrat(
+                              color: AquaColors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
                             decoration: _inputDecoration('Ej. E-200, Titan 50'),
                             validator: (v) => v == null || v.trim().isEmpty ? 'Ingresa el modelo' : null,
                           ),
@@ -918,7 +1038,11 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                           _buildInputLabel('Número de Serie:'),
                           TextFormField(
                             controller: serialController,
-                            style: GoogleFonts.montserrat(color: Colors.white, fontSize: 13),
+                            style: GoogleFonts.montserrat(
+                              color: AquaColors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
                             decoration: _inputDecoration('Ej. SN123456'),
                             validator: (v) => v == null || v.trim().isEmpty ? 'Ingresa la serie' : null,
                           ),
@@ -937,12 +1061,12 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                     decoration: BoxDecoration(
                                       color: isSupplied
                                           ? AquaColors.statusSuppliedBg
-                                          : const Color(0x1F20356C),
+                                          : AquaColors.glacier.withValues(alpha: 0.3),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: isSupplied
                                             ? AquaColors.statusSupplied
-                                            : AquaColors.glassBorderSubtle,
+                                            : AquaColors.platinum,
                                         width: 1.2,
                                       ),
                                     ),
@@ -960,7 +1084,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                           'Abastecido',
                                           style: GoogleFonts.montserrat(
                                             fontSize: 12,
-                                            fontWeight: isSupplied ? FontWeight.w600 : FontWeight.w400,
+                                            fontWeight: isSupplied ? FontWeight.w700 : FontWeight.w500,
                                             color: isSupplied ? AquaColors.statusSupplied : AquaColors.textSecondary,
                                           ),
                                         ),
@@ -979,12 +1103,12 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                     decoration: BoxDecoration(
                                       color: !isSupplied
                                           ? AquaColors.statusPendingBg
-                                          : const Color(0x1F20356C),
+                                          : AquaColors.glacier.withValues(alpha: 0.3),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: !isSupplied
                                             ? AquaColors.statusPending
-                                            : AquaColors.glassBorderSubtle,
+                                            : AquaColors.platinum,
                                         width: 1.2,
                                       ),
                                     ),
@@ -1002,7 +1126,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                           'Falta abastecer',
                                           style: GoogleFonts.montserrat(
                                             fontSize: 12,
-                                            fontWeight: !isSupplied ? FontWeight.w600 : FontWeight.w400,
+                                            fontWeight: !isSupplied ? FontWeight.w700 : FontWeight.w500,
                                             color: !isSupplied ? AquaColors.statusPending : AquaColors.textSecondary,
                                           ),
                                         ),
@@ -1019,7 +1143,11 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                             _buildInputLabel('Alerta / Motivo de falta:'),
                             TextFormField(
                               controller: alertController,
-                              style: GoogleFonts.montserrat(color: Colors.white, fontSize: 13),
+                              style: GoogleFonts.montserrat(
+                                color: AquaColors.textPrimary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
                               decoration: _inputDecoration('Ej. Nivel bajo, Garrafón vacío'),
                             ),
                             const SizedBox(height: 12),
@@ -1053,16 +1181,16 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
 
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    backgroundColor: const Color(0xFF1E3166),
+                                    backgroundColor: AquaColors.turquoise,
                                     behavior: SnackBarBehavior.floating,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                                     content: Row(
                                       children: [
-                                        const Icon(Icons.check_circle_rounded, color: AquaColors.statusSupplied, size: 20),
+                                        const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
                                         const SizedBox(width: 10),
                                         Text(
                                           'Despachador ${updated.id} guardado con éxito',
-                                          style: GoogleFonts.montserrat(color: Colors.white, fontSize: 13),
+                                          style: GoogleFonts.montserrat(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
                                         ),
                                       ],
                                     ),
@@ -1098,7 +1226,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
         label,
         style: GoogleFonts.montserrat(
           fontSize: 12,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           color: AquaColors.textSecondary,
         ),
       ),
@@ -1110,19 +1238,19 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
       hintText: hint,
       hintStyle: GoogleFonts.montserrat(color: AquaColors.textMuted, fontSize: 13),
       filled: true,
-      fillColor: const Color(0x2820356C),
+      fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AquaColors.glassBorderSubtle),
+        borderSide: const BorderSide(color: AquaColors.platinum),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AquaColors.glassBorderSubtle),
+        borderSide: const BorderSide(color: AquaColors.platinum),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AquaColors.cornflowerBlue, width: 1.5),
+        borderSide: const BorderSide(color: AquaColors.turquoise, width: 1.5),
       ),
     );
   }
@@ -1135,6 +1263,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
           label,
           style: GoogleFonts.montserrat(
             fontSize: 12,
+            fontWeight: FontWeight.w500,
             color: AquaColors.textSecondary,
           ),
         ),
@@ -1142,8 +1271,8 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
           value,
           style: GoogleFonts.montserrat(
             fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: valueColor ?? Colors.white,
+            fontWeight: FontWeight.w700,
+            color: valueColor ?? AquaColors.textPrimary,
           ),
         ),
       ],
@@ -1159,20 +1288,19 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
         return GlassCard(
           borderRadius: 16,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          backgroundColor: const Color(0x201F356B),
-          borderColor: AquaColors.glassBorderSubtle,
           child: Row(
             children: [
               Container(
-                width: 34,
-                height: 34,
-                decoration: const BoxDecoration(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Color(0x284468C7),
+                  color: AquaColors.glacier.withValues(alpha: 0.5),
+                  border: Border.all(color: AquaColors.slateBlue.withValues(alpha: 0.3)),
                 ),
                 child: const Icon(
                   Icons.history_rounded,
-                  color: AquaColors.icyBlue,
+                  color: AquaColors.turquoise,
                   size: 18,
                 ),
               ),
@@ -1185,8 +1313,8 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                       item['date'] as String,
                       style: GoogleFonts.montserrat(
                         fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        color: AquaColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -1194,6 +1322,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                       item['user'] as String,
                       style: GoogleFonts.montserrat(
                         fontSize: 11,
+                        fontWeight: FontWeight.w500,
                         color: AquaColors.textSecondary,
                       ),
                     ),
@@ -1204,8 +1333,8 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                 '${item['bottles']} garrafones',
                 style: GoogleFonts.montserrat(
                   fontSize: 12,
-                  color: AquaColors.textSecondary,
-                  fontWeight: FontWeight.w500,
+                  color: AquaColors.turquoise,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],

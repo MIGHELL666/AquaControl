@@ -51,8 +51,6 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
           child: GlassCard(
             borderRadius: 24,
             padding: const EdgeInsets.all(22),
-            backgroundColor: const Color(0xFF132247),
-            borderColor: AquaColors.glassBorderSubtle,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -61,11 +59,14 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
                   height: 48,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF869DFF).withValues(alpha: 0.15),
+                    color: AquaColors.turquoise.withValues(alpha: 0.12),
+                    border: Border.all(
+                      color: AquaColors.turquoise.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: const Icon(
                     Icons.logout_rounded,
-                    color: AquaColors.icyBlue,
+                    color: AquaColors.turquoise,
                     size: 24,
                   ),
                 ),
@@ -75,7 +76,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
                   style: GoogleFonts.montserrat(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AquaColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -141,21 +142,29 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
                     'Escanear QR',
                     style: GoogleFonts.montserrat(
                       fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      color: AquaColors.textPrimary,
+                      letterSpacing: -0.3,
                     ),
                   ),
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0x283D518C),
+                      color: AquaColors.glacier.withValues(alpha: 0.5),
                       shape: BoxShape.circle,
-                      border: Border.all(color: AquaColors.glassBorderSubtle),
+                      border: Border.all(color: AquaColors.platinum),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AquaColors.shadowCard,
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: IconButton(
                       icon: const Icon(
                         Icons.logout_rounded,
                         size: 19,
-                        color: AquaColors.icyBlue,
+                        color: AquaColors.turquoise,
                       ),
                       tooltip: 'Cerrar sesión',
                       onPressed: () => _confirmLogout(context),
@@ -172,18 +181,19 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Glow backdrop
+                      // Viewfinder translucent card
                       Container(
                         width: 250,
                         height: 250,
                         decoration: BoxDecoration(
-                          color: const Color(0x1A25428E),
+                          color: Colors.white.withValues(alpha: 0.75),
                           borderRadius: BorderRadius.circular(28),
+                          border: Border.all(color: AquaColors.platinum, width: 1.5),
                           boxShadow: [
                             BoxShadow(
-                              color: AquaColors.cornflowerBlue.withValues(alpha: 0.25),
-                              blurRadius: 36,
-                              spreadRadius: 4,
+                              color: AquaColors.shadowCard,
+                              blurRadius: 32,
+                              spreadRadius: 2,
                             ),
                           ],
                         ),
@@ -194,7 +204,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
                         width: 250,
                         height: 250,
                         child: CustomPaint(
-                          painter: _ScannerCornersPainter(color: AquaColors.cornflowerBlue),
+                          painter: _ScannerCornersPainter(color: AquaColors.turquoise),
                         ),
                       ),
 
@@ -205,21 +215,24 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
                           Icon(
                             Icons.qr_code_scanner_rounded,
                             size: 72,
-                            color: AquaColors.icyBlue.withValues(alpha: 0.9),
+                            color: AquaColors.turquoise.withValues(alpha: 0.8),
                           ),
                           const SizedBox(height: 12),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: const Color(0x401E347A),
-                              borderRadius: BorderRadius.circular(8),
+                              color: AquaColors.turquoise.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AquaColors.turquoise.withValues(alpha: 0.3),
+                              ),
                             ),
                             child: Text(
                               'Toca para escanear',
                               style: GoogleFonts.montserrat(
                                 fontSize: 11,
-                                color: AquaColors.icyBlue,
-                                fontWeight: FontWeight.w500,
+                                color: AquaColors.turquoise,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
@@ -234,22 +247,22 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
                             top: 20 + (_animController.value * 210),
                             child: Container(
                               width: 210,
-                              height: 2,
+                              height: 3,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
                                     Colors.transparent,
-                                    AquaColors.cornflowerBlue.withValues(alpha: 0.9),
+                                    AquaColors.turquoise.withValues(alpha: 0.9),
                                     Colors.white,
-                                    AquaColors.cornflowerBlue.withValues(alpha: 0.9),
+                                    AquaColors.turquoise.withValues(alpha: 0.9),
                                     Colors.transparent,
                                   ],
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AquaColors.cornflowerBlue.withValues(alpha: 0.8),
-                                    blurRadius: 10,
-                                    spreadRadius: 2,
+                                    color: AquaColors.turquoise.withValues(alpha: 0.5),
+                                    blurRadius: 8,
+                                    spreadRadius: 1,
                                   ),
                                 ],
                               ),
@@ -270,7 +283,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
                 textAlign: TextAlign.center,
                 style: GoogleFonts.montserrat(
                   fontSize: 13,
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w500,
                   color: AquaColors.textSecondary,
                   height: 1.4,
                 ),
@@ -286,15 +299,25 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
                   });
                 },
                 borderRadius: BorderRadius.circular(24),
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
                   decoration: BoxDecoration(
-                    color: _flashlightOn ? const Color(0x55486DCF) : const Color(0x283D518C),
+                    color: _flashlightOn ? AquaColors.turquoise : Colors.white.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: _flashlightOn ? AquaColors.icyBlue : AquaColors.glassBorderSubtle,
-                      width: 1,
+                      color: _flashlightOn ? AquaColors.turquoise : AquaColors.platinum,
+                      width: 1.2,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _flashlightOn
+                            ? AquaColors.turquoise.withValues(alpha: 0.3)
+                            : AquaColors.shadowCard,
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -302,15 +325,15 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
                       Icon(
                         _flashlightOn ? Icons.flashlight_on_rounded : Icons.flashlight_off_rounded,
                         size: 18,
-                        color: _flashlightOn ? Colors.white : AquaColors.icyBlue,
+                        color: _flashlightOn ? Colors.white : AquaColors.turquoise,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         _flashlightOn ? 'Desactivar linterna' : 'Activar linterna',
                         style: GoogleFonts.montserrat(
                           fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          color: _flashlightOn ? Colors.white : AquaColors.textPrimary,
                         ),
                       ),
                     ],

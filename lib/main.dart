@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/splash_screen.dart';
 import 'theme/aqua_theme.dart';
+import 'theme/aqua_colors.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF091438),
-      systemNavigationBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: AquaColors.iceBlue,
+      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
   runApp(const AquaControlApp());
@@ -24,7 +25,7 @@ class AquaControlApp extends StatelessWidget {
     return MaterialApp(
       title: 'AquaControl',
       debugShowCheckedModeBanner: false,
-      theme: AquaTheme.darkTheme,
+      theme: AquaTheme.lightTheme,
       home: const SplashScreen(),
     );
   }

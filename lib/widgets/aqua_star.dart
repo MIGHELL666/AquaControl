@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/aqua_colors.dart';
 
+/// Estrella AquaControl — Logo corporativo en paleta turquoise/slateBlue.
 class AquaStar extends StatelessWidget {
   final double size;
   final Color? color;
@@ -20,7 +21,7 @@ class AquaStar extends StatelessWidget {
       height: size,
       child: CustomPaint(
         painter: _StarPainter(
-          color: color ?? AquaColors.icyBlue,
+          color: color ?? AquaColors.turquoise,
           hasGlow: hasGlow,
         ),
       ),
@@ -40,25 +41,25 @@ class _StarPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
+    // Glow suave
     if (hasGlow) {
       final glowPaint = Paint()
-        ..color = color.withValues(alpha: 0.35)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, size.width * 0.25);
-      canvas.drawCircle(center, size.width * 0.28, glowPaint);
+        ..color = color.withValues(alpha: 0.25)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, size.width * 0.28);
+      canvas.drawCircle(center, size.width * 0.30, glowPaint);
     }
 
-    // Path for 4-point curved sparkle star
+    // Forma de estrella de 4 puntas con curvas suaves
     final path = Path();
-    // Top tip
     path.moveTo(center.dx, 0);
-    // Curve to right tip
-    path.quadraticBezierTo(center.dx + w * 0.12, center.dy - h * 0.12, w, center.dy);
-    // Curve to bottom tip
-    path.quadraticBezierTo(center.dx + w * 0.12, center.dy + h * 0.12, center.dx, h);
-    // Curve to left tip
-    path.quadraticBezierTo(center.dx - w * 0.12, center.dy + h * 0.12, 0, center.dy);
-    // Curve back to top tip
-    path.quadraticBezierTo(center.dx - w * 0.12, center.dy - h * 0.12, center.dx, 0);
+    path.quadraticBezierTo(
+        center.dx + w * 0.12, center.dy - h * 0.12, w, center.dy);
+    path.quadraticBezierTo(
+        center.dx + w * 0.12, center.dy + h * 0.12, center.dx, h);
+    path.quadraticBezierTo(
+        center.dx - w * 0.12, center.dy + h * 0.12, 0, center.dy);
+    path.quadraticBezierTo(
+        center.dx - w * 0.12, center.dy - h * 0.12, center.dx, 0);
     path.close();
 
     final starPaint = Paint()
@@ -66,10 +67,11 @@ class _StarPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          Colors.white,
+          AquaColors.glacier,
           color,
-          color.withValues(alpha: 0.8),
+          AquaColors.slateBlue,
         ],
+        stops: const [0.0, 0.45, 1.0],
       ).createShader(Rect.fromLTWH(0, 0, w, h));
 
     canvas.drawPath(path, starPaint);

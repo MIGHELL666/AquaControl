@@ -29,9 +29,9 @@ class _DispenserPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    // Glowing aura behind dispenser
+    // Aura suave turquoise detrás del despachador
     final auraPaint = Paint()
-      ..color = AquaColors.cornflowerBlue.withValues(alpha: 0.25)
+      ..color = AquaColors.turquoise.withValues(alpha: 0.18)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 28);
     canvas.drawOval(
       Rect.fromCenter(
@@ -42,7 +42,7 @@ class _DispenserPainter extends CustomPainter {
       auraPaint,
     );
 
-    // Dispenser main body
+    // Cuerpo principal del despachador — gradiente turquoise/glacier
     final bodyRRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(w * 0.22, h * 0.08, w * 0.56, h * 0.84),
       const Radius.circular(16),
@@ -52,10 +52,10 @@ class _DispenserPainter extends CustomPainter {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        const Color(0xFFD3E0F8),
-        const Color(0xFF9AB2E8),
-        const Color(0xFF5E7DC9),
-        const Color(0xFF38529B),
+        AquaColors.iceBlue,
+        AquaColors.glacier,
+        AquaColors.slateBlue,
+        AquaColors.turquoise,
       ],
       stops: const [0.0, 0.35, 0.7, 1.0],
     ).createShader(bodyRRect.outerRect);
@@ -63,33 +63,40 @@ class _DispenserPainter extends CustomPainter {
     final bodyPaint = Paint()..shader = bodyGradient;
     canvas.drawRRect(bodyRRect, bodyPaint);
 
-    // Body border highlight
+    // Borde glass del cuerpo
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2
-      ..color = Colors.white.withValues(alpha: 0.4);
+      ..color = Colors.white.withValues(alpha: 0.55);
     canvas.drawRRect(bodyRRect, borderPaint);
 
-    // Top bottle collar / crown
+    // Corona / collarín superior del garrafón
     final topRRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(w * 0.32, h * 0.02, w * 0.36, h * 0.08),
       const Radius.circular(6),
     );
-    final topPaint = Paint()..color = const Color(0xFFE2ECFF);
+    final topPaint = Paint()
+      ..color = AquaColors.iceBlue;
     canvas.drawRRect(topRRect, topPaint);
+    canvas.drawRRect(
+      topRRect,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8
+        ..color = AquaColors.platinum.withValues(alpha: 0.7),
+    );
 
-    // Dispenser dispensing alcove (darker inset)
+    // Hueco interior / nicho de despacho
     final alcoveRRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(w * 0.30, h * 0.32, w * 0.40, h * 0.36),
       const Radius.circular(10),
     );
-    final alcovePaint = Paint()..color = const Color(0xFF091438);
+    final alcovePaint = Paint()
+      ..color = AquaColors.textPrimary.withValues(alpha: 0.75);
     canvas.drawRRect(alcoveRRect, alcovePaint);
 
-    // Spouts (cold and hot water)
-    final spoutPaintBlue = Paint()..color = const Color(0xFF4FA0FF);
-    final spoutPaintRed = Paint()..color = const Color(0xFFFF5277);
-
+    // Grifo frío — turquoise
+    final spoutPaintBlue = Paint()..color = AquaColors.slateBlue;
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTWH(w * 0.38, h * 0.36, w * 0.08, h * 0.12),
@@ -98,6 +105,8 @@ class _DispenserPainter extends CustomPainter {
       spoutPaintBlue,
     );
 
+    // Grifo caliente — coral suave
+    final spoutPaintRed = Paint()..color = AquaColors.statusError;
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTWH(w * 0.54, h * 0.36, w * 0.08, h * 0.12),
@@ -106,8 +115,8 @@ class _DispenserPainter extends CustomPainter {
       spoutPaintRed,
     );
 
-    // Water drops / drip tray
-    final trayPaint = Paint()..color = const Color(0xFF2A3D73);
+    // Bandeja de goteo — platinum
+    final trayPaint = Paint()..color = AquaColors.platinum;
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTWH(w * 0.32, h * 0.63, w * 0.36, h * 0.04),
@@ -116,13 +125,14 @@ class _DispenserPainter extends CustomPainter {
       trayPaint,
     );
 
-    // Sleek logo icon on upper front
-    final starPaint = Paint()..color = const Color(0xFF0C1945).withValues(alpha: 0.6);
-    canvas.drawCircle(Offset(w * 0.5, h * 0.20), w * 0.045, starPaint);
+    // Punto de logo/detalle en la parte superior frontal
+    final dotPaint = Paint()
+      ..color = AquaColors.turquoise.withValues(alpha: 0.55);
+    canvas.drawCircle(Offset(w * 0.5, h * 0.20), w * 0.045, dotPaint);
 
-    // Glass sheen / reflection highlight
+    // Reflejo/sheen vidrio — destello lateral
     final sheenPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.25)
+      ..color = Colors.white.withValues(alpha: 0.28)
       ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round;
     canvas.drawLine(

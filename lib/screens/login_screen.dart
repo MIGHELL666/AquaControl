@@ -81,29 +81,45 @@ class _LoginScreenState extends State<LoginScreen> {
             child: IntrinsicHeight(
               child: Column(
                 children: [
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8),
 
-                  // Header with Back button and centered logo
+                  // AppBar row
                   Row(
                     children: [
                       if (Navigator.of(context).canPop())
                         IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new, size: 16, color: AquaColors.icyBlue),
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new,
+                            size: 16,
+                            color: AquaColors.textSecondary,
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                       const Spacer(),
-                      const AquaStar(
-                        size: 38,
-                        color: AquaColors.icyBlue,
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.80),
+                          border: Border.all(
+                              color: AquaColors.glassBorder, width: 1),
+                        ),
+                        child: const Center(
+                          child: AquaStar(
+                            size: 20,
+                            color: AquaColors.turquoise,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         'AquaControl',
-                        style: GoogleFonts.cinzel(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          letterSpacing: 1.1,
+                        style: GoogleFonts.montserrat(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AquaColors.textPrimary,
+                          letterSpacing: 0.2,
                         ),
                       ),
                       const Spacer(),
@@ -111,110 +127,142 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(width: 40),
                     ],
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 32),
 
-                  // Role Badge (read-only indicator, no switcher)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0x333D518C),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AquaColors.glassBorderSubtle, width: 1),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isAdmin ? Icons.admin_panel_settings_outlined : Icons.badge_outlined,
-                          size: 16,
-                          color: AquaColors.icyBlue,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          isAdmin ? 'Acceso de Administrador' : 'Acceso de Trabajador',
-                          style: GoogleFonts.montserrat(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                  // Encabezado de rol
+                  Column(
+                    children: [
+                      // Badge de rol
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isAdmin
+                              ? AquaColors.turquoise.withValues(alpha: 0.12)
+                              : AquaColors.slateBlue.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                            color: isAdmin
+                                ? AquaColors.turquoise.withValues(alpha: 0.40)
+                                : AquaColors.slateBlue.withValues(alpha: 0.40),
+                            width: 1,
                           ),
                         ),
-                      ],
-                    ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isAdmin
+                                  ? Icons.shield_rounded
+                                  : Icons.local_shipping_rounded,
+                              size: 15,
+                              color: isAdmin
+                                  ? AquaColors.turquoise
+                                  : AquaColors.slateBlue,
+                            ),
+                            const SizedBox(width: 7),
+                            Text(
+                              isAdmin
+                                  ? 'Acceso de Administrador'
+                                  : 'Acceso de Trabajador',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: isAdmin
+                                    ? AquaColors.turquoise
+                                    : AquaColors.slateBlue,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        isAdmin
+                            ? 'Gestión operativa y reportes'
+                            : 'Escaneo de QR y registro de garrafones',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 12,
+                          color: AquaColors.textMuted,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 36),
 
-                  // Role subtitle
-                  Text(
-                    isAdmin
-                        ? 'Consulta de métricas, reportes y supervisión'
-                        : 'Escaneo de QR y registro de garrafones',
-                    style: GoogleFonts.montserrat(
-                      fontSize: 12,
-                      color: AquaColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Input: Usuario
+                  // Campo: Usuario
                   TextFormField(
                     controller: _userController,
-                    style: GoogleFonts.montserrat(color: Colors.white, fontSize: 14),
+                    style: GoogleFonts.montserrat(
+                      color: AquaColors.textPrimary,
+                      fontSize: 14,
+                    ),
                     decoration: InputDecoration(
                       prefixIcon: Icon(
-                        isAdmin ? Icons.person_outline_rounded : Icons.badge_outlined,
+                        isAdmin
+                            ? Icons.person_outline_rounded
+                            : Icons.badge_outlined,
                         size: 20,
-                        color: AquaColors.icyBlue,
+                        color: AquaColors.slateBlue,
                       ),
                       hintText: 'Usuario',
-                      hintStyle: GoogleFonts.montserrat(color: AquaColors.textMuted, fontSize: 14),
                     ),
                   ),
                   const SizedBox(height: 16),
 
-                  // Input: Contraseña
+                  // Campo: Contraseña
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
-                    style: GoogleFonts.montserrat(color: Colors.white, fontSize: 14),
+                    style: GoogleFonts.montserrat(
+                      color: AquaColors.textPrimary,
+                      fontSize: 14,
+                    ),
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20, color: AquaColors.icyBlue),
+                      prefixIcon: const Icon(
+                        Icons.lock_outline_rounded,
+                        size: 20,
+                        color: AquaColors.slateBlue,
+                      ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
                           size: 20,
-                          color: AquaColors.icyBlue,
+                          color: AquaColors.slateBlue,
                         ),
                         onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
+                          setState(
+                              () => _obscurePassword = !_obscurePassword);
                         },
                       ),
                       hintText: 'Contraseña',
-                      hintStyle: GoogleFonts.montserrat(color: AquaColors.textMuted, fontSize: 14),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 30),
 
-                  // Primary Login Button
+                  // Botón de inicio
                   AquaButton(
-                    text: isAdmin ? 'Iniciar como Administrador' : 'Iniciar como Trabajador',
-                    icon: isAdmin ? Icons.dashboard_customize_outlined : Icons.qr_code_scanner_rounded,
+                    text: isAdmin
+                        ? 'Iniciar como Administrador'
+                        : 'Iniciar como Trabajador',
+                    icon: isAdmin
+                        ? Icons.dashboard_rounded
+                        : Icons.qr_code_scanner_rounded,
                     onPressed: _onLogin,
                   ),
 
                   const Spacer(),
 
-                  // Caption
                   Text(
                     'Solo personal autorizado',
                     style: GoogleFonts.montserrat(
                       fontSize: 11,
                       color: AquaColors.textMuted,
-                      fontWeight: FontWeight.w400,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

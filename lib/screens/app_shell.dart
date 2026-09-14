@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/aqua_background.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/zoom_container.dart';
 import 'admin_dashboard_screen.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
@@ -41,16 +42,18 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: AquaBackground(
-        child: IndexedStack(
-          index: _currentIndex,
-          children: [
-            AdminDashboardScreen(
-              onNavigateToPoints: () => _onTabSelected(1),
-            ),
-            const SupplyPointsScreen(),
-            const HistoryScreen(),
-            const SettingsScreen(),
-          ],
+        child: AquaZoomContainer(
+          child: IndexedStack(
+            index: _currentIndex,
+            children: [
+              AdminDashboardScreen(
+                onNavigateToPoints: () => _onTabSelected(1),
+              ),
+              const SupplyPointsScreen(),
+              const HistoryScreen(),
+              const SettingsScreen(),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: AquaBottomNavBar(
