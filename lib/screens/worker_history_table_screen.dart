@@ -2,14 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/zone_data.dart';
 import '../theme/aqua_colors.dart';
+import '../utils/table_pdf_printer.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/signature_pad.dart';
 
 class WorkerHistoryTableScreen extends StatefulWidget {
-  const WorkerHistoryTableScreen({super.key});
+  final bool showFinancials;
+
+  const WorkerHistoryTableScreen({
+    super.key,
+    this.showFinancials = true,
+  });
 
   @override
-  State<WorkerHistoryTableScreen> createState() => _WorkerHistoryTableScreenState();
+  State<WorkerHistoryTableScreen> createState() =>
+      _WorkerHistoryTableScreenState();
 }
 
 class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
@@ -23,6 +30,10 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
 
   int get _totalBottles {
     return _filteredRecords.fold(0, (sum, r) => sum + r.bottles);
+  }
+
+  double get _totalAmount {
+    return _filteredRecords.fold(0.0, (sum, r) => sum + r.totalPrice);
   }
 
   void _showSignatureDialog(SupplyRecord record) {
@@ -50,7 +61,11 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: AquaColors.textSecondary, size: 20),
+                    icon: const Icon(
+                      Icons.close,
+                      color: AquaColors.textSecondary,
+                      size: 20,
+                    ),
                     onPressed: () => Navigator.of(ctx).pop(),
                   ),
                 ],
@@ -82,6 +97,83 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                 ),
               ),
               const SizedBox(height: 6),
+              if (record.clientName.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  margin: const EdgeInsets.only(bottom: 6),
+                  decoration: BoxDecoration(
+                    color: AquaColors.turquoise.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AquaColors.turquoise.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.business_rounded,
+                        size: 14,
+                        color: AquaColors.turquoise,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Cliente: ${record.clientName}',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: AquaColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (widget.showFinancials && record.pricePerBottle > 0)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4.0),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Precio Unit.: \$${record.pricePerBottle.toStringAsFixed(2)}',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 12,
+                          color: AquaColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AquaColors.statusSupplied.withValues(
+                            alpha: 0.12,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AquaColors.statusSupplied.withValues(
+                              alpha: 0.30,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          'Total: \$${record.totalPrice.toStringAsFixed(2)}',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                            color: AquaColors.statusSupplied,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               Text(
                 'Recibió: ${record.recipientName}',
                 style: GoogleFonts.montserrat(
@@ -100,10 +192,7 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                 ),
               ),
               const SizedBox(height: 6),
-              SignaturePreviewBox(
-                points: record.signaturePoints,
-                height: 100,
-              ),
+              SignaturePreviewBox(points: record.signaturePoints, height: 100),
               const SizedBox(height: 14),
               Align(
                 alignment: Alignment.centerRight,
@@ -129,175 +218,275 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
   @override
   Widget build(BuildContext context) {
     final records = _filteredRecords;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final hPadding = screenWidth < 360 ? 12.0 : (screenWidth < 600 ? 16.0 : 20.0);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+      padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: 12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: [
-                  Text(
-                    'Historial y Métricas',
-                    style: GoogleFonts.montserrat(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: AquaColors.textPrimary,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Registro de garrafones por fecha y punto',
-                    style: GoogleFonts.montserrat(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AquaColors.textSecondary,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Historial y Métricas',
+                          style: GoogleFonts.montserrat(
+                            fontSize: screenWidth < 360 ? 18 : 20,
+                            fontWeight: FontWeight.w700,
+                            color: AquaColors.textPrimary,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Registro de garrafones por fecha y punto',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AquaColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AquaColors.glacier.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AquaColors.slateBlue.withValues(alpha: 0.4)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AquaColors.shadowCard,
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        if (widget.showFinancials)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AquaColors.statusSupplied.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: AquaColors.statusSupplied.withValues(
+                                  alpha: 0.32,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.attach_money_rounded,
+                                  size: 12,
+                                  color: AquaColors.statusSupplied,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  '\$${_totalAmount.toStringAsFixed(0)}',
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: AquaColors.statusSupplied,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AquaColors.glacier.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: AquaColors.slateBlue.withValues(alpha: 0.35),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.water_drop_outlined,
+                                size: 12,
+                                color: AquaColors.slateBlue,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                '$_totalBottles',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: AquaColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Text(
-                  '$_totalBottles Garrafones',
-                  style: GoogleFonts.montserrat(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AquaColors.textPrimary,
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  PopupMenuButton<int>(
+                    padding: EdgeInsets.zero,
+                    icon: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AquaColors.platinum),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _selectedView == 0
+                                ? Icons.table_chart_rounded
+                                : Icons.bar_chart_rounded,
+                            size: 13,
+                            color: AquaColors.turquoise,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _selectedView == 0 ? 'Tabla' : 'Gráfica',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AquaColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 14,
+                            color: AquaColors.textMuted,
+                          ),
+                        ],
+                      ),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    onSelected: (val) => setState(() => _selectedView = val),
+                    itemBuilder: (_) => [
+                      PopupMenuItem<int>(
+                        value: 0,
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.table_chart_rounded,
+                              size: 16,
+                              color: AquaColors.slateBlue,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Ver como Tabla',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 13,
+                                fontWeight: _selectedView == 0
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: _selectedView == 0
+                                    ? AquaColors.turquoise
+                                    : AquaColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<int>(
+                        value: 1,
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.bar_chart_rounded,
+                              size: 16,
+                              color: AquaColors.slateBlue,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Ver como Gráfica',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 13,
+                                fontWeight: _selectedView == 1
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: _selectedView == 1
+                                    ? AquaColors.turquoise
+                                    : AquaColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
 
-          // View Selector: Tabla vs Gráfica de barras
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: AquaColors.glacier.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AquaColors.platinum),
+          // Imprimir Tabla button
+          InkWell(
+            onTap: () => TablePdfPrinter.printRecordsTable(
+              _filteredRecords,
+              includePrices: widget.showFinancials,
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: () => setState(() => _selectedView = 0),
-                    borderRadius: BorderRadius.circular(10),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(vertical: 9),
-                      decoration: BoxDecoration(
-                        color: _selectedView == 0
-                            ? AquaColors.turquoise
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: _selectedView == 0
-                            ? [
-                                BoxShadow(
-                                  color: AquaColors.turquoise.withValues(alpha: 0.25),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      alignment: Alignment.center,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.table_chart_rounded,
-                            size: 16,
-                            color: _selectedView == 0
-                                ? Colors.white
-                                : AquaColors.textSecondary,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Tabla',
-                            style: GoogleFonts.montserrat(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: _selectedView == 0
-                                  ? Colors.white
-                                  : AquaColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AquaColors.turquoise, AquaColors.slateBlue],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: AquaColors.shadowButton,
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.print_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Imprimir Tabla',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
                     ),
                   ),
-                ),
-                Expanded(
-                  child: InkWell(
-                    onTap: () => setState(() => _selectedView = 1),
-                    borderRadius: BorderRadius.circular(10),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(vertical: 9),
-                      decoration: BoxDecoration(
-                        color: _selectedView == 1
-                            ? AquaColors.turquoise
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: _selectedView == 1
-                            ? [
-                                BoxShadow(
-                                  color: AquaColors.turquoise.withValues(alpha: 0.25),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      alignment: Alignment.center,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.bar_chart_rounded,
-                            size: 16,
-                            color: _selectedView == 1
-                                ? Colors.white
-                                : AquaColors.textSecondary,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Gráfica de barras',
-                            style: GoogleFonts.montserrat(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: _selectedView == 1
-                                  ? Colors.white
-                                  : AquaColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -306,31 +495,46 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: ['Todas', 'Producción', 'Almacén', 'Calidad', 'Taller', 'Oficinas']
-                  .map((zone) {
-                final isSel = _filterZone == zone;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 6.0),
-                  child: ChoiceChip(
-                    label: Text(
-                      zone,
-                      style: GoogleFonts.montserrat(
-                        fontSize: 11,
-                        fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                        color: isSel ? Colors.white : AquaColors.textPrimary,
+              children:
+                  [
+                    'Todas',
+                    'Producción',
+                    'Almacén',
+                    'Calidad',
+                    'Taller',
+                    'Oficinas',
+                  ].map((zone) {
+                    final isSel = _filterZone == zone;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6.0),
+                      child: ChoiceChip(
+                        label: Text(
+                          zone,
+                          style: GoogleFonts.montserrat(
+                            fontSize: 11,
+                            fontWeight: isSel
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isSel
+                                ? Colors.white
+                                : AquaColors.textPrimary,
+                          ),
+                        ),
+                        selected: isSel,
+                        selectedColor: AquaColors.turquoise,
+                        backgroundColor: AquaColors.glacier.withValues(
+                          alpha: 0.4,
+                        ),
+                        side: BorderSide(
+                          color: isSel
+                              ? AquaColors.turquoise
+                              : AquaColors.platinum,
+                          width: 1.2,
+                        ),
+                        onSelected: (_) => setState(() => _filterZone = zone),
                       ),
-                    ),
-                    selected: isSel,
-                    selectedColor: AquaColors.turquoise,
-                    backgroundColor: AquaColors.glacier.withValues(alpha: 0.4),
-                    side: BorderSide(
-                      color: isSel ? AquaColors.turquoise : AquaColors.platinum,
-                      width: 1.2,
-                    ),
-                    onSelected: (_) => setState(() => _filterZone = zone),
-                  ),
-                );
-              }).toList(),
+                    );
+                  }).toList(),
             ),
           ),
           const SizedBox(height: 12),
@@ -359,6 +563,36 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
         ),
       );
     }
+
+    final showPrices = widget.showFinancials;
+    final Map<int, TableColumnWidth> colWidths = showPrices
+        ? const {
+            0: FixedColumnWidth(95), // Fecha
+            1: FixedColumnWidth(70), // Hora
+            2: FixedColumnWidth(115), // Punto/Zona
+            3: FixedColumnWidth(105), // Despachador
+            4: FixedColumnWidth(145), // Cliente
+            5: FixedColumnWidth(95), // Garrafones
+            6: FixedColumnWidth(120), // Operación
+            7: FixedColumnWidth(140), // Recibió
+            8: FixedColumnWidth(110), // Precio Unit.
+            9: FixedColumnWidth(110), // Total
+            10: FixedColumnWidth(96), // Firma
+          }
+        : const {
+            0: FixedColumnWidth(85), // Fecha
+            1: FixedColumnWidth(62), // Hora
+            2: FixedColumnWidth(105), // Punto/Zona
+            3: FixedColumnWidth(95), // Despachador
+            4: FixedColumnWidth(115), // Cliente
+            5: FixedColumnWidth(85), // Garrafones
+            6: FixedColumnWidth(95), // Operación
+            7: FixedColumnWidth(110), // Recibió
+            8: FixedColumnWidth(92), // Firma
+          };
+    final double tableWidth = colWidths.values
+        .whereType<FixedColumnWidth>()
+        .fold(0.0, (sum, w) => sum + w.value);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -411,10 +645,7 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: AquaColors.platinum,
-                width: 1.5,
-              ),
+              border: Border.all(color: AquaColors.platinum, width: 1.5),
               boxShadow: [
                 BoxShadow(
                   color: AquaColors.shadowCard,
@@ -427,24 +658,16 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
               borderRadius: BorderRadius.circular(13),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
                 child: SizedBox(
-                  width: 905,
+                  width: tableWidth,
                   child: Column(
                     children: [
                       // Fixed Grid Header
                       Container(
                         color: AquaColors.glacier.withValues(alpha: 0.65),
                         child: Table(
-                          columnWidths: const {
-                            0: FixedColumnWidth(100), // Fecha
-                            1: FixedColumnWidth(75),  // Hora
-                            2: FixedColumnWidth(125), // Punto/Zona
-                            3: FixedColumnWidth(115), // Despachador
-                            4: FixedColumnWidth(105), // Garrafones
-                            5: FixedColumnWidth(130), // Operación
-                            6: FixedColumnWidth(145), // Recibió
-                            7: FixedColumnWidth(110), // Firma
-                          },
+                          columnWidths: colWidths,
                           border: const TableBorder(
                             bottom: BorderSide(
                               color: AquaColors.platinum,
@@ -458,38 +681,73 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                           children: [
                             TableRow(
                               children: [
-                                _buildGridHeaderCell('Fecha', Icons.calendar_today_outlined),
-                                _buildGridHeaderCell('Hora', Icons.access_time_rounded),
-                                _buildGridHeaderCell('Punto / Zona', Icons.location_on_outlined),
-                                _buildGridHeaderCell('Despachador', Icons.local_drink_outlined),
-                                _buildGridHeaderCell('Garrafones', Icons.water_drop_outlined),
-                                _buildGridHeaderCell('Operación', Icons.sync_alt_rounded),
-                                _buildGridHeaderCell('Recibió', Icons.person_outline_rounded),
-                                _buildGridHeaderCell('Firma', Icons.draw_outlined),
+                                _buildGridHeaderCell(
+                                  'Fecha',
+                                  Icons.calendar_today_outlined,
+                                ),
+                                _buildGridHeaderCell(
+                                  'Hora',
+                                  Icons.access_time_rounded,
+                                ),
+                                _buildGridHeaderCell(
+                                  'Punto / Zona',
+                                  Icons.location_on_outlined,
+                                ),
+                                _buildGridHeaderCell(
+                                  'Despachador',
+                                  Icons.local_drink_outlined,
+                                ),
+                                _buildGridHeaderCell(
+                                  'Cliente',
+                                  Icons.business_center_outlined,
+                                ),
+                                _buildGridHeaderCell(
+                                  'Garrafones',
+                                  Icons.water_drop_outlined,
+                                ),
+                                _buildGridHeaderCell(
+                                  'Operación',
+                                  Icons.sync_alt_rounded,
+                                ),
+                                _buildGridHeaderCell(
+                                  'Recibió',
+                                  Icons.person_outline_rounded,
+                                ),
+                                if (showPrices) ...[
+                                  _buildGridHeaderCell(
+                                    'Precio Unit.',
+                                    Icons.attach_money_rounded,
+                                  ),
+                                  _buildGridHeaderCell(
+                                    'Total (\$)',
+                                    Icons.payments_rounded,
+                                  ),
+                                ],
+                                _buildGridHeaderCell(
+                                  'Firma',
+                                  Icons.draw_outlined,
+                                ),
                               ],
                             ),
                           ],
                         ),
                       ),
 
-                      // Scrollable Grid Rows
                       Expanded(
                         child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
                           child: Table(
-                            columnWidths: const {
-                              0: FixedColumnWidth(100),
-                              1: FixedColumnWidth(75),
-                              2: FixedColumnWidth(125),
-                              3: FixedColumnWidth(115),
-                              4: FixedColumnWidth(105),
-                              5: FixedColumnWidth(130),
-                              6: FixedColumnWidth(145),
-                              7: FixedColumnWidth(110),
-                            },
-                            border: BorderSide(
-                              color: AquaColors.platinum.withValues(alpha: 0.5),
-                              width: 1,
-                            ).toTableBorder(),
+                            columnWidths: colWidths,
+                            border: TableBorder(
+                              horizontalInside: BorderSide(
+                                color: AquaColors.platinum.withValues(alpha: 0.5),
+                                width: 1,
+                              ),
+                              verticalInside: BorderSide(
+                                color: AquaColors.platinum.withValues(alpha: 0.5),
+                                width: 1,
+                              ),
+                            ),
                             children: List.generate(records.length, (index) {
                               final item = records[index];
                               final isEven = index % 2 == 0;
@@ -545,7 +803,9 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                                         vertical: 3,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: AquaColors.glacier.withValues(alpha: 0.5),
+                                        color: AquaColors.glacier.withValues(
+                                          alpha: 0.5,
+                                        ),
                                         borderRadius: BorderRadius.circular(6),
                                         border: Border.all(
                                           color: AquaColors.platinum,
@@ -562,6 +822,24 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                                     ),
                                   ),
 
+                                  // Cliente
+                                  _buildGridCell(
+                                    Text(
+                                      item.clientName.isEmpty
+                                          ? '—'
+                                          : item.clientName,
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: item.clientName.isEmpty
+                                            ? AquaColors.textSecondary
+                                            : AquaColors.textPrimary,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+
                                   // Garrafones
                                   _buildGridCell(
                                     Center(
@@ -571,10 +849,14 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                                           vertical: 3,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: AquaColors.turquoise.withValues(alpha: 0.15),
-                                          borderRadius: BorderRadius.circular(8),
+                                          color: AquaColors.turquoise
+                                              .withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                           border: Border.all(
-                                            color: AquaColors.turquoise.withValues(alpha: 0.5),
+                                            color: AquaColors.turquoise
+                                                .withValues(alpha: 0.5),
                                           ),
                                         ),
                                         child: Text(
@@ -601,23 +883,29 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                                           ),
                                           decoration: BoxDecoration(
                                             color: item.isResupply
-                                                ? AquaColors.statusPendingBg
+                                                ? AquaColors.statusResuppliedBg
                                                 : AquaColors.statusSuppliedBg,
-                                            borderRadius: BorderRadius.circular(6),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
                                             border: Border.all(
                                               color: item.isResupply
-                                                  ? AquaColors.statusPendingBorder
-                                                  : AquaColors.statusSuppliedBorder,
+                                                  ? AquaColors
+                                                        .statusResuppliedBorder
+                                                  : AquaColors
+                                                        .statusSuppliedBorder,
                                               width: 0.8,
                                             ),
                                           ),
                                           child: Text(
-                                            item.isResupply ? 'Reabasto' : 'Abasto',
+                                            item.isResupply
+                                                ? 'Reabasto'
+                                                : 'Abasto',
                                             style: GoogleFonts.montserrat(
                                               fontSize: 10,
                                               fontWeight: FontWeight.w700,
                                               color: item.isResupply
-                                                  ? AquaColors.statusPending
+                                                  ? AquaColors.statusResupplied
                                                   : AquaColors.statusSupplied,
                                             ),
                                           ),
@@ -640,43 +928,113 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                                     ),
                                   ),
 
-                                  // Firma Button
-                                  _buildGridCell(
-                                    InkWell(
-                                      onTap: () => _showSignatureDialog(item),
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AquaColors.turquoise.withValues(alpha: 0.12),
-                                          borderRadius: BorderRadius.circular(8),
-                                          border: Border.all(
-                                            color: AquaColors.turquoise.withValues(alpha: 0.3),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(
-                                              Icons.draw_rounded,
-                                              size: 13,
-                                              color: AquaColors.turquoise,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              'Ver',
+                                  if (showPrices) ...[
+                                    // Precio Unit.
+                                    _buildGridCell(
+                                      item.pricePerBottle > 0
+                                          ? Text(
+                                              '\$${item.pricePerBottle.toStringAsFixed(2)}',
                                               style: GoogleFonts.montserrat(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w700,
-                                                color: AquaColors.turquoise,
+                                                fontSize: 11,
+                                                color: AquaColors.textPrimary,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            )
+                                          : Text(
+                                              '—',
+                                              style: GoogleFonts.montserrat(
+                                                fontSize: 11,
+                                                color: AquaColors.textSecondary,
                                               ),
                                             ),
-                                          ],
+                                    ),
+
+                                    // Total ($)
+                                    _buildGridCell(
+                                      item.pricePerBottle > 0
+                                          ? Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 3,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: AquaColors.statusSupplied
+                                                    .withValues(alpha: 0.10),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                border: Border.all(
+                                                  color: AquaColors.statusSupplied
+                                                      .withValues(alpha: 0.35),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                '\$${item.totalPrice.toStringAsFixed(2)}',
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w800,
+                                                  color:
+                                                      AquaColors.statusSupplied,
+                                                ),
+                                              ),
+                                            )
+                                          : Text(
+                                              '—',
+                                              style: GoogleFonts.montserrat(
+                                                fontSize: 11,
+                                                color: AquaColors.textSecondary,
+                                              ),
+                                            ),
+                                    ),
+                                  ],
+
+                                  // Firma Button
+                                  _buildGridCell(
+                                    Center(
+                                      child: InkWell(
+                                        onTap: () => _showSignatureDialog(item),
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AquaColors.turquoise
+                                                .withValues(alpha: 0.12),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            border: Border.all(
+                                              color: AquaColors.turquoise
+                                                  .withValues(alpha: 0.3),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(
+                                                Icons.draw_rounded,
+                                                size: 13,
+                                                color: AquaColors.turquoise,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'Ver',
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AquaColors.turquoise,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
+                                    ),
+                                    alignment: Alignment.center,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 10,
                                     ),
                                   ),
                                 ],
@@ -698,13 +1056,13 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
 
   Widget _buildGridHeaderCell(String title, IconData icon) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       alignment: Alignment.centerLeft,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: AquaColors.turquoise),
-          const SizedBox(width: 6),
+          const SizedBox(width: 5),
           Flexible(
             child: Text(
               title,
@@ -715,6 +1073,7 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                 letterSpacing: 0.2,
               ),
               overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
         ],
@@ -722,10 +1081,15 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
     );
   }
 
-  Widget _buildGridCell(Widget child) {
+  Widget _buildGridCell(
+    Widget child, {
+    Alignment alignment = Alignment.centerLeft,
+    EdgeInsetsGeometry padding =
+        const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
-      alignment: Alignment.centerLeft,
+      padding: padding,
+      alignment: alignment,
       child: child,
     );
   }
@@ -738,7 +1102,8 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
     final now = DateTime.now();
     for (int i = 6; i >= 0; i--) {
       final d = now.subtract(Duration(days: i));
-      final key = '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}';
+      final key =
+          '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}';
       dailyBottles[key] = 0;
 
       final weekdayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -746,13 +1111,17 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
     }
 
     for (final r in records) {
-      final key = '${r.timestamp.day.toString().padLeft(2, '0')}/${r.timestamp.month.toString().padLeft(2, '0')}';
+      final key =
+          '${r.timestamp.day.toString().padLeft(2, '0')}/${r.timestamp.month.toString().padLeft(2, '0')}';
       if (dailyBottles.containsKey(key)) {
         dailyBottles[key] = dailyBottles[key]! + r.bottles;
       }
     }
 
-    final maxVal = dailyBottles.values.fold(1, (prev, val) => val > prev ? val : prev);
+    final maxVal = dailyBottles.values.fold(
+      1,
+      (prev, val) => val > prev ? val : prev,
+    );
 
     return SingleChildScrollView(
       child: Column(
@@ -768,14 +1137,19 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Garrafones entregados (últimos 7 días)',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AquaColors.textPrimary,
+                    Expanded(
+                      child: Text(
+                        'Garrafones entregados (últimos 7 días)',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AquaColors.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 8),
                     const Icon(
                       Icons.insights_rounded,
                       size: 20,
@@ -793,8 +1167,11 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: dailyBottles.entries.map((entry) {
                       final count = entry.value;
-                      final heightFactor = maxVal == 0 ? 0.05 : (count / maxVal).clamp(0.08, 1.0);
-                      final isToday = entry.key ==
+                      final heightFactor = maxVal == 0
+                          ? 0.05
+                          : (count / maxVal).clamp(0.08, 1.0);
+                      final isToday =
+                          entry.key ==
                           '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}';
 
                       return Column(
@@ -806,7 +1183,9 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                             style: GoogleFonts.montserrat(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: count > 0 ? AquaColors.turquoise : AquaColors.textMuted,
+                              color: count > 0
+                                  ? AquaColors.turquoise
+                                  : AquaColors.textMuted,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -825,15 +1204,21 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                                         AquaColors.slateBlue,
                                       ]
                                     : [
-                                        AquaColors.slateBlue.withValues(alpha: 0.85),
-                                        AquaColors.turquoise.withValues(alpha: 0.65),
+                                        AquaColors.slateBlue.withValues(
+                                          alpha: 0.85,
+                                        ),
+                                        AquaColors.turquoise.withValues(
+                                          alpha: 0.65,
+                                        ),
                                       ],
                               ),
                               borderRadius: BorderRadius.circular(6),
                               boxShadow: count > 0
                                   ? [
                                       BoxShadow(
-                                        color: AquaColors.turquoise.withValues(alpha: 0.3),
+                                        color: AquaColors.turquoise.withValues(
+                                          alpha: 0.3,
+                                        ),
                                         blurRadius: 8,
                                         offset: const Offset(0, 2),
                                       ),
@@ -849,8 +1234,12 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                             textAlign: TextAlign.center,
                             style: GoogleFonts.montserrat(
                               fontSize: 10,
-                              fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
-                              color: isToday ? AquaColors.turquoise : AquaColors.textSecondary,
+                              fontWeight: isToday
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: isToday
+                                  ? AquaColors.turquoise
+                                  : AquaColors.textSecondary,
                               height: 1.2,
                             ),
                           ),
@@ -952,8 +1341,6 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
 }
 
 extension TableBorderExtension on BorderSide {
-  TableBorder toTableBorder() => TableBorder(
-        horizontalInside: this,
-        verticalInside: this,
-      );
+  TableBorder toTableBorder() =>
+      TableBorder(horizontalInside: this, verticalInside: this);
 }

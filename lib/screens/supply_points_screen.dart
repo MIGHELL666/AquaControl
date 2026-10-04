@@ -21,10 +21,7 @@ class SupplyPointItem {
 class SupplyPointsScreen extends StatefulWidget {
   final bool showBackButton;
 
-  const SupplyPointsScreen({
-    super.key,
-    this.showBackButton = false,
-  });
+  const SupplyPointsScreen({super.key, this.showBackButton = false});
 
   @override
   State<SupplyPointsScreen> createState() => _SupplyPointsScreenState();
@@ -68,8 +65,12 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final supplied = _allPoints.where((p) => p.status == SupplyStatus.supplied).length;
-    final pending = _allPoints.where((p) => p.status == SupplyStatus.pending).length;
+    final supplied = _allPoints
+        .where((p) => p.status == SupplyStatus.supplied)
+        .length;
+    final pending = _allPoints
+        .where((p) => p.status == SupplyStatus.pending)
+        .length;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
@@ -105,11 +106,23 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
           // Mini resumen
           Row(
             children: [
-              _buildMiniStat('${_allPoints.length}', 'Total', AquaColors.slateBlue),
+              _buildMiniStat(
+                '${_allPoints.length}',
+                'Total',
+                AquaColors.slateBlue,
+              ),
               const SizedBox(width: 8),
-              _buildMiniStat('$supplied', 'Abastecidos', AquaColors.statusSupplied),
+              _buildMiniStat(
+                '$supplied',
+                'Abastecidos',
+                AquaColors.statusSupplied,
+              ),
               const SizedBox(width: 8),
-              _buildMiniStat('$pending', 'Pendientes', AquaColors.statusPending),
+              _buildMiniStat(
+                '$pending',
+                'Pendientes',
+                AquaColors.statusPending,
+              ),
             ],
           ),
           const SizedBox(height: 14),
@@ -137,10 +150,7 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: AquaColors.glassBorder),
               boxShadow: [
-                BoxShadow(
-                  color: AquaColors.shadowCard,
-                  blurRadius: 8,
-                ),
+                BoxShadow(color: AquaColors.shadowCard, blurRadius: 8),
               ],
             ),
             child: TextField(
@@ -198,11 +208,17 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
                     separatorBuilder: (_, i) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final item = _filteredPoints[index];
+                      final zone = kDefaultZones.firstWhere(
+                        (z) => z.name == item.title,
+                        orElse: () => kDefaultZones.first,
+                      );
                       final isSupplied = item.status == SupplyStatus.supplied;
                       return GlassCard(
                         borderRadius: 16,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 14),
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                         borderColor: isSupplied
                             ? AquaColors.glassBorder
                             : AquaColors.statusPendingBorder,
@@ -262,7 +278,66 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
                             ),
 
                             AquaBadge(status: item.status),
-                            const SizedBox(width: 6),
+                            PopupMenuButton<String>(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(
+                                Icons.more_vert_rounded,
+                                size: 18,
+                                color: AquaColors.textMuted,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              itemBuilder: (_) => [
+                                PopupMenuItem<String>(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.edit_rounded,
+                                        size: 16,
+                                        color: AquaColors.slateBlue,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Editar zona',
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem<String>(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.delete_rounded,
+                                        size: 16,
+                                        color: AquaColors.statusError,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Eliminar zona',
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 13,
+                                          color: AquaColors.statusError,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              onSelected: (val) {
+                                if (val == 'edit') {
+                                  _showAddEditZoneDialog(existingZone: zone);
+                                } else if (val == 'delete') {
+                                  _confirmDeleteZone(zone);
+                                }
+                              },
+                            ),
+                            const SizedBox(width: 2),
                             const Icon(
                               Icons.chevron_right_rounded,
                               size: 16,
@@ -275,6 +350,431 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showAddEditZoneDialog({ZoneItem? existingZone}) {
+    final isEdit = existingZone != null;
+    final currentZone = existingZone;
+    final nameCtrl = TextEditingController(text: existingZone?.name ?? '');
+    final subtitleCtrl = TextEditingController(
+      text: existingZone?.subtitle ?? '',
+    );
+    String? error;
+    final oldName = existingZone?.name;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (dCtx, setDState) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: AquaColors.shadowFloat,
+                  blurRadius: 24,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isEdit
+                            ? AquaColors.slateBlue.withValues(alpha: 0.12)
+                            : AquaColors.turquoise.withValues(alpha: 0.12),
+                      ),
+                      child: Icon(
+                        isEdit
+                            ? Icons.edit_location_alt_rounded
+                            : Icons.add_location_alt_rounded,
+                        size: 18,
+                        color: isEdit
+                            ? AquaColors.slateBlue
+                            : AquaColors.turquoise,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        isEdit ? 'Editar Zona' : 'Nueva Zona',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AquaColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        size: 18,
+                        color: AquaColors.textSecondary,
+                      ),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildZoneTextField(
+                  nameCtrl,
+                  'Nombre de la zona',
+                  'Ej. Calidad',
+                  Icons.place_rounded,
+                ),
+                const SizedBox(height: 10),
+                _buildZoneTextField(
+                  subtitleCtrl,
+                  'Descripción',
+                  'Ej. Laboratorio de análisis',
+                  Icons.notes_rounded,
+                ),
+                if (error != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    error!,
+                    style: GoogleFonts.montserrat(
+                      fontSize: 11,
+                      color: AquaColors.statusError,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 18),
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: isEdit
+                          ? [AquaColors.slateBlue, const Color(0xFF3C5B74)]
+                          : [AquaColors.turquoise, AquaColors.slateBlue],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AquaColors.shadowButton,
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        final name = nameCtrl.text.trim();
+                        if (name.isEmpty) {
+                          setDState(() => error = 'El nombre es requerido.');
+                          return;
+                        }
+                        final duplicate = kDefaultZones.any(
+                          (z) =>
+                              z.name.toLowerCase() == name.toLowerCase() &&
+                              z.name != oldName,
+                        );
+                        if (duplicate) {
+                          setDState(
+                            () => error = 'Ya existe una zona con ese nombre.',
+                          );
+                          return;
+                        }
+                        if (isEdit) {
+                          final updated = ZoneItem(
+                            name: name,
+                            subtitle: subtitleCtrl.text.trim().isEmpty
+                                ? currentZone!.subtitle
+                                : subtitleCtrl.text.trim(),
+                            dispensers: currentZone!.dispensers,
+                          );
+                          updateZone(oldName!, updated);
+                        } else {
+                          addZone(
+                            ZoneItem(
+                              name: name,
+                              subtitle: subtitleCtrl.text.trim().isEmpty
+                                  ? 'Zona de abastecimiento'
+                                  : subtitleCtrl.text.trim(),
+                              dispensers: [],
+                            ),
+                          );
+                        }
+                        Navigator.of(ctx).pop();
+                        setState(() {});
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: AquaColors.turquoise,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            content: Row(
+                              children: [
+                                const Icon(
+                                  Icons.check_circle_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  isEdit
+                                      ? 'Zona "$name" actualizada'
+                                      : 'Zona "$name" agregada con éxito',
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              isEdit ? Icons.save_rounded : Icons.add_rounded,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isEdit ? 'Guardar cambios' : 'Agregar Zona',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmDeleteZone(ZoneItem zone) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: AquaColors.shadowFloat,
+                blurRadius: 24,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AquaColors.statusError.withValues(alpha: 0.12),
+                ),
+                child: const Icon(
+                  Icons.delete_rounded,
+                  color: AquaColors.statusError,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Eliminar zona "${zone.name}"',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.montserrat(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AquaColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Esta acción eliminará la zona y sus ${zone.totalDispensers} despachador(es). No se puede deshacer.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.montserrat(
+                  fontSize: 12,
+                  color: AquaColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => Navigator.of(ctx).pop(),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AquaColors.glacier.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AquaColors.platinum),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Cancelar',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AquaColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        deleteZone(zone.name);
+                        Navigator.of(ctx).pop();
+                        setState(() {});
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: AquaColors.statusError,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            content: Row(
+                              children: [
+                                const Icon(
+                                  Icons.delete_sweep_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'Zona "${zone.name}" eliminada',
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AquaColors.statusError,
+                              const Color(0xFFB91C1C),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AquaColors.statusError.withValues(
+                                alpha: 0.35,
+                              ),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Eliminar',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildZoneTextField(
+    TextEditingController ctrl,
+    String label,
+    String hint,
+    IconData icon,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AquaColors.platinum),
+      ),
+      child: TextField(
+        controller: ctrl,
+        style: GoogleFonts.montserrat(
+          fontSize: 13,
+          color: AquaColors.textPrimary,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          prefixIcon: Icon(icon, size: 18, color: AquaColors.slateBlue),
+          labelStyle: GoogleFonts.montserrat(
+            fontSize: 12,
+            color: AquaColors.textSecondary,
+          ),
+          hintStyle: GoogleFonts.montserrat(
+            fontSize: 12,
+            color: AquaColors.textMuted,
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 14,
+          ),
+        ),
       ),
     );
   }
@@ -338,14 +838,9 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
                       color: AquaColors.shadowButton,
                       blurRadius: 10,
                       offset: const Offset(0, 3),
-                    )
+                    ),
                   ]
-                : [
-                    BoxShadow(
-                      color: AquaColors.shadowCard,
-                      blurRadius: 6,
-                    )
-                  ],
+                : [BoxShadow(color: AquaColors.shadowCard, blurRadius: 6)],
           ),
           child: Text(
             label,

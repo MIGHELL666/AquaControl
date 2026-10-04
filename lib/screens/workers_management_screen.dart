@@ -35,9 +35,6 @@ class _WorkersManagementScreenState extends State<WorkersManagementScreen> {
     );
     final phoneCtrl = TextEditingController();
     final emailCtrl = TextEditingController();
-    String selectedZone = 'Producción';
-    String selectedShift = 'Matutino';
-    final List<String> selectedClients = [];
     String? formError;
 
     showModalBottomSheet(
@@ -50,314 +47,204 @@ class _WorkersManagementScreenState extends State<WorkersManagementScreen> {
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(modalCtx).viewInsets.bottom,
             ),
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                boxShadow: [
-                  BoxShadow(
-                    color: AquaColors.shadowFloat,
-                    blurRadius: 24,
-                    offset: Offset(0, -6),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(modalCtx).size.height * 0.88,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AquaColors.platinum,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Registrar Nuevo Trabajador',
-                          style: GoogleFonts.montserrat(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            color: AquaColors.textPrimary,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, color: AquaColors.textSecondary, size: 20),
-                          onPressed: () => Navigator.of(modalCtx).pop(),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      'Ingresa los datos del trabajador y asígnale zonas y empresas clientes',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: AquaColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Inputs
-                    _buildTextField(
-                      controller: nameCtrl,
-                      label: 'Nombre completo',
-                      hint: 'Ej. Juan Manuel Ramos',
-                      icon: Icons.person_outline_rounded,
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildTextField(
-                            controller: empNumCtrl,
-                            label: 'No. Empleado',
-                            hint: 'EMP-1065',
-                            icon: Icons.badge_outlined,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildTextField(
-                            controller: phoneCtrl,
-                            label: 'Teléfono',
-                            hint: '55 9876 5432',
-                            icon: Icons.phone_outlined,
-                            keyboardType: TextInputType.phone,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    _buildTextField(
-                      controller: emailCtrl,
-                      label: 'Correo electrónico',
-                      hint: 'trabajador@aquacontrol.com',
-                      icon: Icons.email_outlined,
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Zone selection
-                    Text(
-                      'Zona o ruta principal',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AquaColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: ['Producción', 'Almacén', 'Calidad', 'Taller', 'Oficinas', 'Mantenimiento']
-                          .map((zone) {
-                        final isSel = selectedZone == zone;
-                        return ChoiceChip(
-                          label: Text(
-                            zone,
-                            style: GoogleFonts.montserrat(
-                              fontSize: 11,
-                              color: isSel ? Colors.white : AquaColors.textPrimary,
-                              fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                            ),
-                          ),
-                          selected: isSel,
-                          selectedColor: AquaColors.turquoise,
-                          backgroundColor: AquaColors.glacier.withValues(alpha: 0.4),
-                          side: BorderSide(
-                            color: isSel ? AquaColors.turquoise : AquaColors.platinum,
-                          ),
-                          onSelected: (_) => setModalState(() => selectedZone = zone),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Shift selection
-                    Text(
-                      'Turno laboral',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AquaColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 8,
-                      children: ['Matutino', 'Vespertino', 'Nocturno', 'Mixto'].map((shift) {
-                        final isSel = selectedShift == shift;
-                        return ChoiceChip(
-                          label: Text(
-                            shift,
-                            style: GoogleFonts.montserrat(
-                              fontSize: 11,
-                              color: isSel ? Colors.white : AquaColors.textPrimary,
-                              fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                            ),
-                          ),
-                          selected: isSel,
-                          selectedColor: AquaColors.turquoise,
-                          backgroundColor: AquaColors.glacier.withValues(alpha: 0.4),
-                          side: BorderSide(
-                            color: isSel ? AquaColors.turquoise : AquaColors.platinum,
-                          ),
-                          onSelected: (_) => setModalState(() => selectedShift = shift),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Clientes Asignados Multi-selection
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Asignar a Clientes / Empresas:',
-                          style: GoogleFonts.montserrat(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AquaColors.textPrimary,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AquaColors.glacier.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AquaColors.slateBlue.withValues(alpha: 0.4)),
-                          ),
-                          child: Text(
-                            '${selectedClients.length} seleccionada${selectedClients.length == 1 ? '' : 's'}',
-                            style: GoogleFonts.montserrat(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: AquaColors.turquoise,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Toca las empresas a las que este trabajador dará servicio',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 11,
-                        color: AquaColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: kDefaultClients.map((client) {
-                        final isSel = selectedClients.contains(client.companyName);
-                        return FilterChip(
-                          avatar: Icon(
-                            isSel ? Icons.check_circle_rounded : Icons.business_outlined,
-                            size: 15,
-                            color: isSel ? Colors.white : AquaColors.turquoise,
-                          ),
-                          label: Text(
-                            client.companyName,
-                            style: GoogleFonts.montserrat(
-                              fontSize: 11,
-                              fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                              color: isSel ? Colors.white : AquaColors.textPrimary,
-                            ),
-                          ),
-                          selected: isSel,
-                          selectedColor: AquaColors.turquoise,
-                          backgroundColor: AquaColors.glacier.withValues(alpha: 0.4),
-                          side: BorderSide(
-                            color: isSel ? AquaColors.turquoise : AquaColors.platinum,
-                          ),
-                          onSelected: (selected) {
-                            setModalState(() {
-                              if (selected) {
-                                selectedClients.add(client.companyName);
-                              } else {
-                                selectedClients.remove(client.companyName);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-
-                    if (formError != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        formError!,
-                        style: GoogleFonts.montserrat(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AquaColors.statusError,
-                        ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: 620,
+                  maxHeight: MediaQuery.of(modalCtx).size.height * 0.88,
+                ),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AquaColors.shadowFloat,
+                        blurRadius: 24,
+                        offset: Offset(0, -6),
                       ),
                     ],
-                    const SizedBox(height: 22),
-
-                    // Submit button
-                    AquaButton(
-                      text: 'Registrar trabajador',
-                      icon: Icons.person_add_rounded,
-                      onPressed: () {
-                        final name = nameCtrl.text.trim();
-                        if (name.isEmpty) {
-                          setModalState(() => formError = 'Ingresa el nombre del trabajador.');
-                          return;
-                        }
-
-                        final newWorker = WorkerItem(
-                          id: 'WRK-${DateTime.now().millisecondsSinceEpoch % 10000}',
-                          name: name,
-                          employeeNumber: empNumCtrl.text.trim().isEmpty
-                              ? 'EMP-${1060 + kDefaultWorkers.length}'
-                              : empNumCtrl.text.trim(),
-                          phone: phoneCtrl.text.trim().isEmpty ? '55 0000 0000' : phoneCtrl.text.trim(),
-                          email: emailCtrl.text.trim().isEmpty
-                              ? '${name.toLowerCase().replaceAll(' ', '.')}@aquacontrol.com'
-                              : emailCtrl.text.trim(),
-                          assignedZone: selectedZone,
-                          shift: selectedShift,
-                          assignedClients: List.from(selectedClients),
-                        );
-
-                        addWorker(newWorker);
-                        Navigator.of(modalCtx).pop();
-                        setState(() {});
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            backgroundColor: AquaColors.turquoise,
-                            content: Text(
-                              'Trabajador "$name" registrado correctamente',
-                              style: GoogleFonts.montserrat(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: AquaColors.platinum,
+                              borderRadius: BorderRadius.circular(2),
                             ),
                           ),
-                        );
-                      },
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Registrar Nuevo Trabajador',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                  color: AquaColors.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, color: AquaColors.textSecondary, size: 20),
+                              onPressed: () => Navigator.of(modalCtx).pop(),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          'Ingresa los datos del trabajador para darle acceso al sistema con todas las empresas',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AquaColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Inputs
+                        _buildTextField(
+                          controller: nameCtrl,
+                          label: 'Nombre completo *',
+                          hint: 'Ej. Juan Manuel Ramos',
+                          icon: Icons.person_outline_rounded,
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildTextField(
+                                controller: empNumCtrl,
+                                label: 'No. Empleado',
+                                hint: 'EMP-1065',
+                                icon: Icons.badge_outlined,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildTextField(
+                                controller: phoneCtrl,
+                                label: 'Teléfono',
+                                hint: '55 9876 5432',
+                                icon: Icons.phone_outlined,
+                                keyboardType: TextInputType.phone,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          controller: emailCtrl,
+                          label: 'Correo electrónico',
+                          hint: 'trabajador@aquacontrol.com',
+                          icon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Info banner confirming all companies access
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: AquaColors.glacier.withValues(alpha: 0.45),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AquaColors.slateBlue.withValues(alpha: 0.25),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.business_rounded,
+                                size: 18,
+                                color: AquaColors.turquoise,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'El trabajador tendrá acceso a todas las empresas clientes registradas en el sistema.',
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AquaColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        if (formError != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            formError!,
+                            style: GoogleFonts.montserrat(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AquaColors.statusError,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 22),
+
+                        // Submit button
+                        AquaButton(
+                          text: 'Registrar trabajador',
+                          icon: Icons.person_add_rounded,
+                          onPressed: () {
+                            final name = nameCtrl.text.trim();
+                            if (name.isEmpty) {
+                              setModalState(() => formError = 'Ingresa el nombre del trabajador.');
+                              return;
+                            }
+
+                            final newWorker = WorkerItem(
+                              id: 'WRK-${DateTime.now().millisecondsSinceEpoch % 10000}',
+                              name: name,
+                              employeeNumber: empNumCtrl.text.trim().isEmpty
+                                  ? 'EMP-${1060 + kDefaultWorkers.length}'
+                                  : empNumCtrl.text.trim(),
+                              phone: phoneCtrl.text.trim().isEmpty ? '55 0000 0000' : phoneCtrl.text.trim(),
+                              email: emailCtrl.text.trim().isEmpty
+                                  ? '${name.toLowerCase().replaceAll(' ', '.')}@aquacontrol.com'
+                                  : emailCtrl.text.trim(),
+                              assignedZone: 'Todas',
+                              shift: 'General',
+                              assignedClients: kDefaultClients.map((c) => c.companyName).toList(),
+                            );
+
+                            addWorker(newWorker);
+                            Navigator.of(modalCtx).pop();
+                            setState(() {});
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                backgroundColor: AquaColors.turquoise,
+                                content: Text(
+                                  'Trabajador "$name" registrado con acceso a todas las empresas',
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -1144,12 +1031,16 @@ class _WorkersManagementScreenState extends State<WorkersManagementScreen> {
                                       children: [
                                         Row(
                                           children: [
-                                            Text(
-                                              worker.name,
-                                              style: GoogleFonts.montserrat(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w700,
-                                                color: AquaColors.textPrimary,
+                                            Flexible(
+                                              child: Text(
+                                                worker.name,
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AquaColors.textPrimary,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 1,
                                               ),
                                             ),
                                             const SizedBox(width: 6),
@@ -1177,20 +1068,28 @@ class _WorkersManagementScreenState extends State<WorkersManagementScreen> {
                                         const SizedBox(height: 4),
                                         Row(
                                           children: [
-                                            Text(
-                                              'Zona: ${worker.assignedZone}',
-                                              style: GoogleFonts.montserrat(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w500,
-                                                color: AquaColors.textSecondary,
+                                            Flexible(
+                                              child: Text(
+                                                'Zona: ${worker.assignedZone}',
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: AquaColors.textSecondary,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 1,
                                               ),
                                             ),
                                             const SizedBox(width: 8),
-                                            Text(
-                                              '• Turno ${worker.shift}',
-                                              style: GoogleFonts.montserrat(
-                                                fontSize: 11,
-                                                color: AquaColors.textMuted,
+                                            Flexible(
+                                              child: Text(
+                                                '• Turno ${worker.shift}',
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: 11,
+                                                  color: AquaColors.textMuted,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 1,
                                               ),
                                             ),
                                           ],
@@ -1209,7 +1108,7 @@ class _WorkersManagementScreenState extends State<WorkersManagementScreen> {
                                               const SizedBox(width: 4),
                                               Expanded(
                                                 child: Text(
-                                                  worker.assignedClients.join(', '),
+                                                  worker.assignedClients.length >= kDefaultClients.length ? 'Todas las empresas' : worker.assignedClients.join(', '),
                                                   style: GoogleFonts.montserrat(
                                                     fontSize: 10,
                                                     fontWeight: FontWeight.w600,

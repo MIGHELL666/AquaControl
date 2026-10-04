@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/aqua_colors.dart';
 
-enum SupplyStatus { supplied, pending }
+enum SupplyStatus { supplied, pending, resupplied }
 
 class AquaBadge extends StatelessWidget {
   final SupplyStatus status;
@@ -17,20 +17,34 @@ class AquaBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSupplied = status == SupplyStatus.supplied;
+    final isResupplied = status == SupplyStatus.resupplied;
 
     final bgColor = isSupplied
         ? AquaColors.statusSuppliedBg
-        : AquaColors.statusPendingBg;
+        : isResupplied
+            ? AquaColors.statusResuppliedBg
+            : AquaColors.statusPendingBg;
     final borderColor = isSupplied
         ? AquaColors.statusSuppliedBorder
-        : AquaColors.statusPendingBorder;
+        : isResupplied
+            ? AquaColors.statusResuppliedBorder
+            : AquaColors.statusPendingBorder;
     final textColor = isSupplied
         ? AquaColors.statusSupplied
-        : AquaColors.statusPending;
+        : isResupplied
+            ? AquaColors.statusResupplied
+            : AquaColors.statusPending;
     final icon = isSupplied
         ? Icons.check_circle_rounded
-        : Icons.schedule_rounded;
-    final text = customText ?? (isSupplied ? 'Abastecido' : 'Pendiente');
+        : isResupplied
+            ? Icons.sync_rounded
+            : Icons.schedule_rounded;
+    final text = customText ??
+        (isSupplied
+            ? 'Abastecido'
+            : isResupplied
+                ? 'Reabastecido'
+                : 'Pendiente de abastecer');
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),

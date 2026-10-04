@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "skills": {
+    "flutter-animation": {
+      "source": "thiennc-tesoglobal/flutter-skills",
+      "ref": "v0.9.1",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-animation/SKILL.md",
+      "computedHash": "c652388275fb4a32cd8fedccb4562357f62b2fb69e320fbb8c44c59ffc70a6b5"
+    },
+    "flutter-apply-architecture-best-practices": {
+      "source": "flutter/agent-plugins",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-apply-architecture-best-practices/SKILL.md",
+      "computedHash": "baeb208b1cab90c559677626dbd101b96ba93f803cbed85122abdadeb3283a8b"
+    },
+    "flutter-architecture": {
+      "source": "zakariaf/Flutter-Skills",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-architecture/SKILL.md",
+      "computedHash": "eb6f43eae482ca580a30361ffe86ef757a9460b9e1dc3531be9ae7835fbed9c1"
+    },
+    "flutter-performance": {
+      "source": "zakariaf/Flutter-Skills",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-performance/SKILL.md",
+      "computedHash": "b9f5c4d2885e7a8ebcae6b34f37b104937f81a92a089619430a12b6e419a3826"
+    },
+    "flutter-ui-design": {
+      "source": "thiennc-tesoglobal/flutter-skills",
+      "ref": "v0.9.1",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-ui-design/SKILL.md",
+      "computedHash": "e7e0854a7b381e93e4ffcbabd8663a24647e0baf9cbeacb86c79b734417a5f73"
+    }
+  }
+}

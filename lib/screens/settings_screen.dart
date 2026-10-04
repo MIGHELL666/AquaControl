@@ -11,7 +11,6 @@ import 'login_screen.dart';
 import 'point_detail_screen.dart';
 import 'qr_scanner_screen.dart';
 import 'role_selection_screen.dart';
-import 'splash_screen.dart';
 import 'success_screen.dart';
 import 'worker_shell.dart';
 import 'workers_management_screen.dart';
@@ -111,11 +110,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildNavChip(context, '1. Splash (Auto-carga)', () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SplashScreen()),
-                );
-              }),
               _buildNavChip(context, '2. Login Admin', () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const LoginScreen(initialRole: UserRole.admin)),

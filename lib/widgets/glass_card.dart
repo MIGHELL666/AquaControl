@@ -25,7 +25,7 @@ class GlassCard extends StatelessWidget {
     this.backgroundColor,
     this.borderColor,
     this.borderWidth = 1.0,
-    this.blurSigma = 16.0,
+    this.blurSigma = 0.0,
     this.customShadow,
   });
 

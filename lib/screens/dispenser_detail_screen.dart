@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../models/zone_data.dart';
 import '../theme/aqua_colors.dart';
 import '../widgets/aqua_background.dart';
 import '../widgets/aqua_button.dart';
@@ -14,7 +15,6 @@ class DispenserDetailScreen extends StatefulWidget {
   final String model;
   final String serialNumber;
   final bool isSupplied;
-  final String alertMessage;
 
   const DispenserDetailScreen({
     super.key,
@@ -24,7 +24,6 @@ class DispenserDetailScreen extends StatefulWidget {
     this.model = 'E-200',
     this.serialNumber = 'SN345678',
     this.isSupplied = true,
-    this.alertMessage = '',
   });
 
   @override
@@ -34,11 +33,23 @@ class DispenserDetailScreen extends StatefulWidget {
 class _DispenserDetailScreenState extends State<DispenserDetailScreen> {
   int _bottleCount = 2;
   late bool _isResupplyMode;
+  ClientItem? _selectedClient;
 
   @override
   void initState() {
     super.initState();
     _isResupplyMode = widget.isSupplied;
+    if (WorkerSession.hasClient) {
+      for (final c in kDefaultClients) {
+        if (c.companyName == WorkerSession.activeClientName) {
+          _selectedClient = c;
+          break;
+        }
+      }
+    }
+    _selectedClient ??= kDefaultClients.isNotEmpty
+        ? kDefaultClients.first
+        : null;
   }
 
   void _onProceedToSignature() {
@@ -50,6 +61,8 @@ class _DispenserDetailScreenState extends State<DispenserDetailScreen> {
           bottleCount: _bottleCount,
           isResupply: _isResupplyMode,
           workerName: 'Juan Pérez',
+          clientName: _selectedClient?.companyName ?? '',
+          pricePerBottle: _selectedClient?.pricePerBottle ?? 0.0,
         ),
       ),
     );
@@ -61,36 +74,49 @@ class _DispenserDetailScreenState extends State<DispenserDetailScreen> {
       body: AquaBackground(
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 12.0,
+            ),
             child: Column(
               children: [
                 // Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back_ios_new,
-                            size: 18,
-                            color: AquaColors.turquoise,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back_ios_new,
+                              size: 18,
+                              color: AquaColors.turquoise,
+                            ),
+                            onPressed: () => Navigator.of(context).pop(),
                           ),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Despachador ${widget.dispenserId}',
-                          style: GoogleFonts.montserrat(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: AquaColors.textPrimary,
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              'Despachador ${widget.dispenserId}',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AquaColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: widget.isSupplied
                             ? AquaColors.statusSuppliedBg
@@ -104,7 +130,9 @@ class _DispenserDetailScreenState extends State<DispenserDetailScreen> {
                         ),
                       ),
                       child: Text(
-                        widget.isSupplied ? 'Abastecido' : 'Pendiente',
+                        widget.isSupplied
+                            ? 'Abastecido'
+                            : 'Pendiente de abastecer',
                         style: GoogleFonts.montserrat(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -119,35 +147,32 @@ class _DispenserDetailScreenState extends State<DispenserDetailScreen> {
                 const SizedBox(height: 10),
 
                 // Dispenser Illustration Artwork
-                const Center(
-                  child: WaterDispenserArt(
-                    width: 90,
-                    height: 115,
-                  ),
-                ),
+                const Center(child: WaterDispenserArt(width: 90, height: 115)),
                 const SizedBox(height: 14),
 
                 // Dispenser Details Card
                 GlassCard(
                   borderRadius: 18,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
                   child: Column(
                     children: [
                       _buildDetailRow('Punto / Zona:', widget.pointName),
                       const SizedBox(height: 8),
-                      _buildDetailRow('Marca y Modelo:', '${widget.brand} ${widget.model}'),
+                      _buildDetailRow(
+                        'Marca y Modelo:',
+                        '${widget.brand} ${widget.model}',
+                      ),
                       const SizedBox(height: 8),
                       _buildDetailRow('Serie:', widget.serialNumber),
-                      if (widget.alertMessage.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        _buildDetailRow('Alerta:', widget.alertMessage, isAlert: true),
-                      ],
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
-                // Selector: Abastecimiento inicial vs Reabastecimiento de ronda
+                // Selector: Abastecimiento vs Reabastecimiento
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
@@ -172,7 +197,9 @@ class _DispenserDetailScreenState extends State<DispenserDetailScreen> {
                               boxShadow: !_isResupplyMode
                                   ? [
                                       BoxShadow(
-                                        color: AquaColors.turquoise.withValues(alpha: 0.25),
+                                        color: AquaColors.turquoise.withValues(
+                                          alpha: 0.25,
+                                        ),
                                         blurRadius: 6,
                                         offset: const Offset(0, 2),
                                       ),
@@ -208,7 +235,9 @@ class _DispenserDetailScreenState extends State<DispenserDetailScreen> {
                               boxShadow: _isResupplyMode
                                   ? [
                                       BoxShadow(
-                                        color: AquaColors.turquoise.withValues(alpha: 0.25),
+                                        color: AquaColors.turquoise.withValues(
+                                          alpha: 0.25,
+                                        ),
                                         blurRadius: 6,
                                         offset: const Offset(0, 2),
                                       ),
@@ -245,7 +274,7 @@ class _DispenserDetailScreenState extends State<DispenserDetailScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
 
                 // Stepper Question: ¿Cuántos garrafones?
                 Text(
@@ -258,51 +287,64 @@ class _DispenserDetailScreenState extends State<DispenserDetailScreen> {
                     color: AquaColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
 
-                // Stepper Pill
-                Container(
-                  height: 48,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: AquaColors.platinum, width: 1.2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AquaColors.shadowCard,
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove_circle_outline, color: AquaColors.turquoise),
-                        onPressed: () {
-                          if (_bottleCount > 1) {
-                            setState(() => _bottleCount--);
-                          }
-                        },
-                      ),
-                      Text(
-                        '$_bottleCount',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: AquaColors.textPrimary,
+                // Stepper Pill + total
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 48,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: AquaColors.platinum,
+                            width: 1.2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AquaColors.shadowCard,
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.remove_circle_outline,
+                                color: AquaColors.turquoise,
+                              ),
+                              onPressed: () {
+                                if (_bottleCount > 1) {
+                                  setState(() => _bottleCount--);
+                                }
+                              },
+                            ),
+                            Text(
+                              '$_bottleCount',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: AquaColors.textPrimary,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.add_circle_outline,
+                                color: AquaColors.turquoise,
+                              ),
+                              onPressed: () => setState(() => _bottleCount++),
+                            ),
+                          ],
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle_outline, color: AquaColors.turquoise),
-                        onPressed: () {
-                          setState(() => _bottleCount++);
-                        },
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
                 const Spacer(),
 
@@ -329,7 +371,7 @@ class _DispenserDetailScreenState extends State<DispenserDetailScreen> {
     );
   }
 
-  Widget _buildDetailRow(String label, String value, {bool isAlert = false}) {
+  Widget _buildDetailRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -341,12 +383,18 @@ class _DispenserDetailScreenState extends State<DispenserDetailScreen> {
             color: AquaColors.textSecondary,
           ),
         ),
-        Text(
-          value,
-          style: GoogleFonts.montserrat(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: isAlert ? AquaColors.statusPending : AquaColors.textPrimary,
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            style: GoogleFonts.montserrat(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AquaColors.textPrimary,
+            ),
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
           ),
         ),
       ],

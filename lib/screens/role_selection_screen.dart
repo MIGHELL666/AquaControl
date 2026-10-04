@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/aqua_colors.dart';
 import '../widgets/aqua_background.dart';
-import '../widgets/aqua_star.dart';
+import '../widgets/aqua_logo.dart';
 import '../widgets/glass_card.dart';
 import 'app_shell.dart';
 import 'login_screen.dart';
@@ -57,9 +57,8 @@ class RoleSelectionScreen extends StatelessWidget {
                         ],
                       ),
                       child: const Center(
-                        child: AquaStar(
-                          size: 34,
-                          color: AquaColors.turquoise,
+                        child: AquaLogo(
+                          size: 40,
                         ),
                       ),
                     ),

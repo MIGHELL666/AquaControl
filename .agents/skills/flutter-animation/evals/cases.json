@@ -1,0 +1,38 @@
+[
+  {
+    "name": "chooses-implicit-animation",
+    "prompt": "Animate a card's color and elevation when it becomes selected.",
+    "resources": [
+      "references/motion-patterns-and-reduced-motion.md"
+    ],
+    "expectations": [
+      "uses a proportionate implicit mechanism",
+      {"text": "keeps state as source of truth", "mandatory": true},
+      {"text": "supports reduced motion", "mandatory": true}
+    ]
+  },
+  {
+    "name": "interruptible-controller-lifecycle",
+    "prompt": "Build a draggable panel animation that can reverse midway.",
+    "expectations": ["uses explicit lifecycle-owned animation control", "handles interruption and reversal", "disposes controller and verifies ticker behavior"]
+  },
+  {
+    "name": "staggered-sequence-with-shared-controller",
+    "prompt": "Animate three cards entering sequentially with overlapping intervals using separate AnimationControllers for each card.",
+    "expectations": [
+      "uses a single controller with staggered Interval curves rather than multiple controllers",
+      "disposes the controller correctly in the owning State",
+      "tests intermediate and completed states of the staggered sequence"
+    ]
+  },
+  {
+    "name": "hero-tag-uniqueness-across-list",
+    "prompt": "Add Hero transitions from a product grid to a detail screen. Products can appear in multiple tabs.",
+    "resources": ["references/motion-patterns-and-reduced-motion.md"],
+    "expectations": [
+      {"text": "keeps tags unique within each participating route subtree while using the same selected tag on the source and destination Heroes", "mandatory": true},
+      "handles the case where the same product appears in multiple tab contexts",
+      "verifies that forward and reverse Hero flights occur as well as checking for tag collision assertion errors"
+    ]
+  }
+]

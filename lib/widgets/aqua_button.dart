@@ -121,12 +121,8 @@ class _AquaButtonState extends State<AquaButton>
 
     final isDisabled = widget.onPressed == null && !widget.isLoading;
 
-    return AnimatedBuilder(
-      animation: _scaleAnim,
-      builder: (context, child) => Transform.scale(
-        scale: _scaleAnim.value,
-        child: child,
-      ),
+    return ScaleTransition(
+      scale: _scaleAnim,
       child: GestureDetector(
         onTapDown: (_) {
           if (!isDisabled) _controller.forward();

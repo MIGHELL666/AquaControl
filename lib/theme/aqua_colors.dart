@@ -24,8 +24,8 @@ class AquaColors {
   // VARIACIONES TRANSLÚCIDAS — GLASSMORPHISM
   // ============================================================
 
-  // Fondo de tarjetas glass (blanco translúcido)
-  static const Color glassSurface = Color(0x7AFFFFFF);
+  // Fondo de tarjetas glass (blanco translúcido — alta legibilidad)
+  static const Color glassSurface = Color(0xD9FFFFFF);
 
   // Fondo glass alternativo (glacier translúcido)
   static const Color glassSurfaceGlacier = Color(0x61B9D8E1);
@@ -67,10 +67,15 @@ class AquaColors {
   static const Color statusSuppliedBg = Color(0x332A7A5C);
   static const Color statusSuppliedBorder = Color(0x662A7A5C);
 
-  // Pendiente / Advertencia
-  static const Color statusPending = Color(0xFFC47A1A);
-  static const Color statusPendingBg = Color(0x33C47A1A);
-  static const Color statusPendingBorder = Color(0x66C47A1A);
+  // Pendiente / Falta abastecer — Rojo
+  static const Color statusPending = Color(0xFFD03C35);
+  static const Color statusPendingBg = Color(0x22D03C35);
+  static const Color statusPendingBorder = Color(0x55D03C35);
+
+  // Reabastecido — Azul
+  static const Color statusResupplied = Color(0xFF2563EB);
+  static const Color statusResuppliedBg = Color(0x222563EB);
+  static const Color statusResuppliedBorder = Color(0x552563EB);
 
   // Error / Peligro
   static const Color statusError = Color(0xFFC45347);
@@ -108,7 +113,7 @@ class AquaColors {
   static const Color deepNavy = Color(0xFF132D3B);
 
   /// @deprecated Usar [glassSurface]
-  static const Color surfaceCard = Color(0x7AFFFFFF);
+  static const Color surfaceCard = Color(0xD9FFFFFF);
 
   /// @deprecated Usar [glassBorderSubtle]
   static const Color glassBorderOld = Color(0x80DADEE1);

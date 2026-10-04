@@ -12,10 +12,7 @@ import 'dispenser_detail_screen.dart';
 class PointDetailScreen extends StatefulWidget {
   final String pointName;
 
-  const PointDetailScreen({
-    super.key,
-    this.pointName = 'Producción',
-  });
+  const PointDetailScreen({super.key, this.pointName = 'Producción'});
 
   @override
   State<PointDetailScreen> createState() => _PointDetailScreenState();
@@ -27,31 +24,11 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
   bool _showHistory = false;
 
   final List<Map<String, dynamic>> _recentHistory = const [
-    {
-      'date': '06/09/2026',
-      'user': 'Juan Pérez',
-      'bottles': 2,
-    },
-    {
-      'date': '05/09/2026',
-      'user': 'Carlos López',
-      'bottles': 2,
-    },
-    {
-      'date': '04/09/2026',
-      'user': 'Juan Pérez',
-      'bottles': 3,
-    },
-    {
-      'date': '03/09/2026',
-      'user': 'Pedro García',
-      'bottles': 2,
-    },
-    {
-      'date': '02/09/2026',
-      'user': 'Carlos López',
-      'bottles': 2,
-    },
+    {'date': '06/09/2026', 'user': 'Juan Pérez', 'bottles': 2},
+    {'date': '05/09/2026', 'user': 'Carlos López', 'bottles': 2},
+    {'date': '04/09/2026', 'user': 'Juan Pérez', 'bottles': 3},
+    {'date': '03/09/2026', 'user': 'Pedro García', 'bottles': 2},
+    {'date': '02/09/2026', 'user': 'Carlos López', 'bottles': 2},
   ];
 
   ZoneItem get _currentZone {
@@ -64,7 +41,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
   List<DispenserItem> get _filteredDispensers {
     final zone = _currentZone;
     if (_selectedFilter == 'Faltan') {
-      return zone.dispensers.where((d) => !d.isSupplied).toList();
+      return zone.dispensers.where((d) => d.isPending).toList();
     }
     if (_selectedFilter == 'Abastecidos') {
       return zone.dispensers.where((d) => d.isSupplied).toList();
@@ -136,6 +113,64 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                         ? 'Abastecida'
                         : 'Faltan ${zone.pendingCount}',
                   ),
+                  PopupMenuButton<String>(
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(
+                      Icons.more_vert_rounded,
+                      size: 20,
+                      color: AquaColors.textMuted,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    itemBuilder: (_) => [
+                      PopupMenuItem<String>(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.edit_rounded,
+                              size: 16,
+                              color: AquaColors.slateBlue,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Editar zona',
+                              style: GoogleFonts.montserrat(fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.delete_rounded,
+                              size: 16,
+                              color: AquaColors.statusError,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Eliminar zona',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 13,
+                                color: AquaColors.statusError,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    onSelected: (val) {
+                      final currentZone = _currentZone;
+                      if (val == 'edit') {
+                        _showAddEditZoneDialog(existingZone: currentZone);
+                      } else if (val == 'delete') {
+                        _confirmDeleteZone(currentZone);
+                      }
+                    },
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -172,7 +207,9 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            _showHistory ? 'Ver despachadores' : 'Ver historial',
+                            _showHistory
+                                ? 'Ver despachadores'
+                                : 'Ver historial',
                             style: GoogleFonts.montserrat(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -193,7 +230,10 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildFilterChip('Todos (${zone.totalDispensers})', 'Todos'),
+                      _buildFilterChip(
+                        'Todos (${zone.totalDispensers})',
+                        'Todos',
+                      ),
                       const SizedBox(width: 8),
                       _buildFilterChip(
                         'Faltan abastecer (${zone.pendingCount})',
@@ -217,25 +257,25 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                 child: _showHistory
                     ? _buildHistoryList()
                     : filteredList.isEmpty
-                        ? Center(
-                            child: Text(
-                              'No hay despachadores en esta categoría',
-                              style: GoogleFonts.montserrat(
-                                color: AquaColors.textSecondary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          )
-                        : ListView.separated(
-                            itemCount: filteredList.length,
-                            separatorBuilder: (_, index) =>
-                                const SizedBox(height: 10),
-                            itemBuilder: (context, index) {
-                              final item = filteredList[index];
-                              return _buildDispenserCard(context, item, zone.name);
-                            },
+                    ? Center(
+                        child: Text(
+                          'No hay despachadores en esta categoría',
+                          style: GoogleFonts.montserrat(
+                            color: AquaColors.textSecondary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
                           ),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: filteredList.length,
+                        separatorBuilder: (_, index) =>
+                            const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          final item = filteredList[index];
+                          return _buildDispenserCard(context, item, zone.name);
+                        },
+                      ),
               ),
             ],
           ),
@@ -270,7 +310,9 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: (accentColor ?? AquaColors.turquoise).withValues(alpha: 0.25),
+                    color: (accentColor ?? AquaColors.turquoise).withValues(
+                      alpha: 0.25,
+                    ),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -282,9 +324,7 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
           style: GoogleFonts.montserrat(
             fontSize: 11,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected
-                ? Colors.white
-                : AquaColors.textPrimary,
+            color: isSelected ? Colors.white : AquaColors.textPrimary,
           ),
         ),
       ),
@@ -296,17 +336,45 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
     DispenserItem dispenser,
     String zoneName,
   ) {
-    final isSupplied = dispenser.isSupplied;
+    final isPending = dispenser.isPending;
+    final isResupplied = dispenser.isResupplied;
+
+    final Color cardBg = isPending
+        ? AquaColors.statusPendingBg.withValues(alpha: 0.12)
+        : isResupplied
+        ? AquaColors.statusResuppliedBg.withValues(alpha: 0.10)
+        : Colors.white.withValues(alpha: 0.85);
+    final Color borderCol = isPending
+        ? AquaColors.statusPendingBorder
+        : isResupplied
+        ? AquaColors.statusResuppliedBorder
+        : AquaColors.platinum;
+    final Color iconBgCol = isPending
+        ? AquaColors.statusPendingBg
+        : isResupplied
+        ? AquaColors.statusResuppliedBg
+        : AquaColors.statusSuppliedBg;
+    final Color iconCol = isPending
+        ? AquaColors.statusPending
+        : isResupplied
+        ? AquaColors.statusResupplied
+        : AquaColors.statusSupplied;
+    final IconData iconData = isPending
+        ? Icons.hourglass_empty_rounded
+        : isResupplied
+        ? Icons.sync_rounded
+        : Icons.water_drop_rounded;
+    final String statusLabel = isPending
+        ? 'Pendiente'
+        : isResupplied
+        ? 'Reabastecido'
+        : 'Abastecido';
 
     return GlassCard(
       borderRadius: 16,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      backgroundColor: isSupplied
-          ? Colors.white.withValues(alpha: 0.85)
-          : AquaColors.statusPendingBg.withValues(alpha: 0.12),
-      borderColor: isSupplied
-          ? AquaColors.platinum
-          : AquaColors.statusPending.withValues(alpha: 0.4),
+      backgroundColor: cardBg,
+      borderColor: borderCol,
       onTap: () {
         _showDispenserDetailsModal(context, dispenser, zoneName);
       },
@@ -318,28 +386,14 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
             height: 38,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isSupplied
-                  ? AquaColors.statusSuppliedBg
-                  : AquaColors.statusPendingBg,
-              border: Border.all(
-                color: isSupplied
-                    ? AquaColors.statusSuppliedBorder
-                    : AquaColors.statusPendingBorder,
-              ),
+              color: iconBgCol,
+              border: Border.all(color: borderCol),
             ),
-            child: Icon(
-              isSupplied
-                  ? Icons.water_drop_rounded
-                  : Icons.warning_amber_rounded,
-              color: isSupplied
-                  ? AquaColors.statusSupplied
-                  : AquaColors.statusPending,
-              size: 20,
-            ),
+            child: Icon(iconData, color: iconCol, size: 20),
           ),
           const SizedBox(width: 12),
 
-          // Details: ID, Model, Last Info / Alert
+          // Details: ID, Model, Status info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -376,17 +430,11 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  isSupplied
-                      ? dispenser.lastSupplyInfo
-                      : dispenser.alertMessage.isNotEmpty
-                          ? dispenser.alertMessage
-                          : 'Falta abastecer',
+                  dispenser.lastSupplyInfo,
                   style: GoogleFonts.montserrat(
                     fontSize: 11,
-                    fontWeight: isSupplied ? FontWeight.w500 : FontWeight.w600,
-                    color: isSupplied
-                        ? AquaColors.textMuted
-                        : AquaColors.statusPending,
+                    fontWeight: isPending ? FontWeight.w600 : FontWeight.w500,
+                    color: iconCol,
                   ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
@@ -398,8 +446,12 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
 
           // Status Badge
           AquaBadge(
-            status: isSupplied ? SupplyStatus.supplied : SupplyStatus.pending,
-            customText: isSupplied ? 'Abastecido' : 'Falta',
+            status: isPending
+                ? SupplyStatus.pending
+                : isResupplied
+                ? SupplyStatus.resupplied
+                : SupplyStatus.supplied,
+            customText: statusLabel,
           ),
           const SizedBox(width: 2),
 
@@ -428,7 +480,6 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                       model: dispenser.model,
                       serialNumber: dispenser.serialNumber,
                       isSupplied: dispenser.isSupplied,
-                      alertMessage: dispenser.alertMessage,
                     ),
                   ),
                 );
@@ -445,7 +496,9 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                 child: Row(
                   children: [
                     Icon(
-                      dispenser.isSupplied ? Icons.sync_rounded : Icons.water_drop_rounded,
+                      dispenser.isSupplied
+                          ? Icons.sync_rounded
+                          : Icons.water_drop_rounded,
                       size: 16,
                       color: AquaColors.turquoise,
                     ),
@@ -465,7 +518,11 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                 value: 'edit',
                 child: Row(
                   children: [
-                    const Icon(Icons.edit_outlined, size: 16, color: AquaColors.turquoise),
+                    const Icon(
+                      Icons.edit_outlined,
+                      size: 16,
+                      color: AquaColors.turquoise,
+                    ),
                     const SizedBox(width: 10),
                     Text(
                       'Editar',
@@ -482,7 +539,11 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                 value: 'delete',
                 child: Row(
                   children: [
-                    const Icon(Icons.delete_outline_rounded, size: 16, color: AquaColors.statusError),
+                    const Icon(
+                      Icons.delete_outline_rounded,
+                      size: 16,
+                      color: AquaColors.statusError,
+                    ),
                     const SizedBox(width: 10),
                     Text(
                       'Eliminar',
@@ -507,7 +568,28 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
     DispenserItem dispenser,
     String zoneName,
   ) {
-    final isSupplied = dispenser.isSupplied;
+    final isPendingDetail = dispenser.isPending;
+    final isResuppliedDetail = dispenser.isResupplied;
+    final Color detailIconBg = isPendingDetail
+        ? AquaColors.statusPendingBg
+        : isResuppliedDetail
+        ? AquaColors.statusResuppliedBg
+        : AquaColors.statusSuppliedBg;
+    final Color detailIconColor = isPendingDetail
+        ? AquaColors.statusPending
+        : isResuppliedDetail
+        ? AquaColors.statusResupplied
+        : AquaColors.statusSupplied;
+    final IconData detailIcon = isPendingDetail
+        ? Icons.hourglass_empty_rounded
+        : isResuppliedDetail
+        ? Icons.sync_rounded
+        : Icons.water_drop_rounded;
+    final String detailStatusLabel = isPendingDetail
+        ? 'Pendiente de abastecer'
+        : isResuppliedDetail
+        ? 'Reabastecido'
+        : 'Abastecido';
 
     showModalBottomSheet(
       context: context,
@@ -553,24 +635,10 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                       height: 44,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isSupplied
-                            ? AquaColors.statusSuppliedBg
-                            : AquaColors.statusPendingBg,
-                        border: Border.all(
-                          color: isSupplied
-                              ? AquaColors.statusSuppliedBorder
-                              : AquaColors.statusPendingBorder,
-                        ),
+                        color: detailIconBg,
+                        border: Border.all(color: detailIconBg),
                       ),
-                      child: Icon(
-                        isSupplied
-                            ? Icons.water_drop_rounded
-                            : Icons.warning_amber_rounded,
-                        color: isSupplied
-                            ? AquaColors.statusSupplied
-                            : AquaColors.statusPending,
-                        size: 22,
-                      ),
+                      child: Icon(detailIcon, color: detailIconColor, size: 22),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -597,8 +665,12 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                       ),
                     ),
                     AquaBadge(
-                      status: isSupplied ? SupplyStatus.supplied : SupplyStatus.pending,
-                      customText: isSupplied ? 'Abastecido' : 'Falta abastecer',
+                      status: isPendingDetail
+                          ? SupplyStatus.pending
+                          : isResuppliedDetail
+                          ? SupplyStatus.resupplied
+                          : SupplyStatus.supplied,
+                      customText: detailStatusLabel,
                     ),
                   ],
                 ),
@@ -607,7 +679,10 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                 // Technical details
                 GlassCard(
                   borderRadius: 16,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   child: Column(
                     children: [
                       _buildModalRow('Área / Zona:', zoneName),
@@ -616,14 +691,15 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                       const Divider(color: AquaColors.platinum, height: 16),
                       _buildModalRow('Modelo:', dispenser.model),
                       const Divider(color: AquaColors.platinum, height: 16),
-                      _buildModalRow('Número de Serie:', dispenser.serialNumber),
+                      _buildModalRow(
+                        'Número de Serie:',
+                        dispenser.serialNumber,
+                      ),
                       const Divider(color: AquaColors.platinum, height: 16),
                       _buildModalRow(
                         'Estado del equipo:',
-                        isSupplied ? 'Abastecido' : 'Falta abastecer',
-                        valueColor: isSupplied
-                            ? AquaColors.statusSupplied
-                            : AquaColors.statusPending,
+                        detailStatusLabel,
+                        valueColor: detailIconColor,
                       ),
                     ],
                   ),
@@ -633,22 +709,27 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                 // Supply status card
                 GlassCard(
                   borderRadius: 14,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  backgroundColor: isSupplied
-                      ? Colors.white
-                      : AquaColors.statusPendingBg.withValues(alpha: 0.12),
-                  borderColor: isSupplied
-                      ? AquaColors.platinum
-                      : AquaColors.statusPending.withValues(alpha: 0.35),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  backgroundColor: isPendingDetail
+                      ? AquaColors.statusPendingBg.withValues(alpha: 0.12)
+                      : isResuppliedDetail
+                      ? AquaColors.statusResuppliedBg.withValues(alpha: 0.12)
+                      : Colors.white,
+                  borderColor: isPendingDetail
+                      ? AquaColors.statusPendingBorder
+                      : isResuppliedDetail
+                      ? AquaColors.statusResuppliedBorder
+                      : AquaColors.platinum,
                   child: Row(
                     children: [
                       Icon(
-                        isSupplied
+                        isPendingDetail
                             ? Icons.schedule_rounded
-                            : Icons.error_outline_rounded,
-                        color: isSupplied
-                            ? AquaColors.turquoise
-                            : AquaColors.statusPending,
+                            : Icons.history_rounded,
+                        color: detailIconColor,
                         size: 20,
                       ),
                       const SizedBox(width: 12),
@@ -657,24 +738,18 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isSupplied
-                                  ? 'Último abastecimiento'
-                                  : 'Alerta operativa',
+                              isPendingDetail
+                                  ? 'Pendiente de abastecer'
+                                  : 'Último abastecimiento',
                               style: GoogleFonts.montserrat(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: isSupplied
-                                    ? AquaColors.turquoise
-                                    : AquaColors.statusPending,
+                                color: detailIconColor,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              isSupplied
-                                  ? dispenser.lastSupplyInfo
-                                  : (dispenser.alertMessage.isNotEmpty
-                                      ? dispenser.alertMessage
-                                      : 'Requiere abastecimiento'),
+                              dispenser.lastSupplyInfo,
                               style: GoogleFonts.montserrat(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -691,8 +766,12 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
 
                 // Primary Action: Abastecer / Reabastecer con firma
                 AquaButton(
-                  text: isSupplied ? 'Reabastecer en ronda' : 'Abastecer despachador',
-                  icon: isSupplied ? Icons.sync_rounded : Icons.water_drop_rounded,
+                  text: isPendingDetail
+                      ? 'Abastecer despachador'
+                      : 'Reabastecer en ronda',
+                  icon: isPendingDetail
+                      ? Icons.water_drop_rounded
+                      : Icons.sync_rounded,
                   height: 48,
                   onPressed: () async {
                     Navigator.of(ctx).pop();
@@ -705,7 +784,6 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                           model: dispenser.model,
                           serialNumber: dispenser.serialNumber,
                           isSupplied: dispenser.isSupplied,
-                          alertMessage: dispenser.alertMessage,
                         ),
                       ),
                     );
@@ -829,7 +907,10 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                         height: 48,
                         onPressed: () {
                           Navigator.of(dialogCtx).pop();
-                          final success = deleteDispenser(zoneName, dispenser.id);
+                          final success = deleteDispenser(
+                            zoneName,
+                            dispenser.id,
+                          );
                           if (success) {
                             setState(() {});
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -882,20 +963,17 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
     final idController = TextEditingController(text: dispenser.id);
     final brandController = TextEditingController(text: dispenser.brand);
     final modelController = TextEditingController(text: dispenser.model);
-    final serialController = TextEditingController(text: dispenser.serialNumber);
+    final serialController = TextEditingController(
+      text: dispenser.serialNumber,
+    );
     final alertController = TextEditingController(text: dispenser.alertMessage);
 
     String selectedZone = currentZoneName;
     bool isSupplied = dispenser.isSupplied;
 
-    final List<String> availableZones = [
-      'Producción',
-      'Almacén',
-      'Taller',
-      'Oficinas',
-      'Mantenimiento',
-      'Calidad',
-    ];
+    final List<String> availableZones = kDefaultZones
+        .map((z) => z.name)
+        .toList();
 
     showModalBottomSheet(
       context: context,
@@ -912,7 +990,10 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                 constraints: BoxConstraints(
                   maxHeight: MediaQuery.of(context).size.height * 0.88,
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 18,
+                ),
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
@@ -955,7 +1036,11 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.close, color: AquaColors.textSecondary, size: 20),
+                                icon: const Icon(
+                                  Icons.close,
+                                  color: AquaColors.textSecondary,
+                                  size: 20,
+                                ),
                                 onPressed: () => Navigator.of(editCtx).pop(),
                               ),
                             ],
@@ -972,7 +1057,9 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                               fontWeight: FontWeight.w600,
                             ),
                             decoration: _inputDecoration('Ej. #023'),
-                            validator: (v) => v == null || v.trim().isEmpty ? 'Ingresa el código' : null,
+                            validator: (v) => v == null || v.trim().isEmpty
+                                ? 'Ingresa el código'
+                                : null,
                           ),
                           const SizedBox(height: 12),
 
@@ -985,7 +1072,10 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                               border: Border.all(color: AquaColors.platinum),
                             ),
                             child: DropdownButtonFormField<String>(
-                              initialValue: availableZones.contains(selectedZone) ? selectedZone : availableZones.first,
+                              initialValue:
+                                  availableZones.contains(selectedZone)
+                                  ? selectedZone
+                                  : availableZones.first,
                               dropdownColor: Colors.white,
                               style: GoogleFonts.montserrat(
                                 color: AquaColors.textPrimary,
@@ -994,13 +1084,21 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                               ),
                               decoration: const InputDecoration(
                                 border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
                               ),
                               items: availableZones.map((z) {
-                                return DropdownMenuItem(value: z, child: Text(z));
+                                return DropdownMenuItem(
+                                  value: z,
+                                  child: Text(z),
+                                );
                               }).toList(),
                               onChanged: (val) {
-                                if (val != null) setModalState(() => selectedZone = val);
+                                if (val != null) {
+                                  setModalState(() => selectedZone = val);
+                                }
                               },
                             ),
                           ),
@@ -1016,7 +1114,9 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                               fontWeight: FontWeight.w600,
                             ),
                             decoration: _inputDecoration('Ej. EcoWater, Oasis'),
-                            validator: (v) => v == null || v.trim().isEmpty ? 'Ingresa la marca' : null,
+                            validator: (v) => v == null || v.trim().isEmpty
+                                ? 'Ingresa la marca'
+                                : null,
                           ),
                           const SizedBox(height: 12),
 
@@ -1030,7 +1130,9 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                               fontWeight: FontWeight.w600,
                             ),
                             decoration: _inputDecoration('Ej. E-200, Titan 50'),
-                            validator: (v) => v == null || v.trim().isEmpty ? 'Ingresa el modelo' : null,
+                            validator: (v) => v == null || v.trim().isEmpty
+                                ? 'Ingresa el modelo'
+                                : null,
                           ),
                           const SizedBox(height: 12),
 
@@ -1044,7 +1146,9 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                               fontWeight: FontWeight.w600,
                             ),
                             decoration: _inputDecoration('Ej. SN123456'),
-                            validator: (v) => v == null || v.trim().isEmpty ? 'Ingresa la serie' : null,
+                            validator: (v) => v == null || v.trim().isEmpty
+                                ? 'Ingresa la serie'
+                                : null,
                           ),
                           const SizedBox(height: 14),
 
@@ -1054,14 +1158,19 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                             children: [
                               Expanded(
                                 child: InkWell(
-                                  onTap: () => setModalState(() => isSupplied = true),
+                                  onTap: () =>
+                                      setModalState(() => isSupplied = true),
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: isSupplied
                                           ? AquaColors.statusSuppliedBg
-                                          : AquaColors.glacier.withValues(alpha: 0.3),
+                                          : AquaColors.glacier.withValues(
+                                              alpha: 0.3,
+                                            ),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: isSupplied
@@ -1072,20 +1181,27 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                     ),
                                     alignment: Alignment.center,
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           Icons.check_circle_rounded,
                                           size: 16,
-                                          color: isSupplied ? AquaColors.statusSupplied : AquaColors.textMuted,
+                                          color: isSupplied
+                                              ? AquaColors.statusSupplied
+                                              : AquaColors.textMuted,
                                         ),
                                         const SizedBox(width: 6),
                                         Text(
                                           'Abastecido',
                                           style: GoogleFonts.montserrat(
                                             fontSize: 12,
-                                            fontWeight: isSupplied ? FontWeight.w700 : FontWeight.w500,
-                                            color: isSupplied ? AquaColors.statusSupplied : AquaColors.textSecondary,
+                                            fontWeight: isSupplied
+                                                ? FontWeight.w700
+                                                : FontWeight.w500,
+                                            color: isSupplied
+                                                ? AquaColors.statusSupplied
+                                                : AquaColors.textSecondary,
                                           ),
                                         ),
                                       ],
@@ -1096,14 +1212,19 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: InkWell(
-                                  onTap: () => setModalState(() => isSupplied = false),
+                                  onTap: () =>
+                                      setModalState(() => isSupplied = false),
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: !isSupplied
                                           ? AquaColors.statusPendingBg
-                                          : AquaColors.glacier.withValues(alpha: 0.3),
+                                          : AquaColors.glacier.withValues(
+                                              alpha: 0.3,
+                                            ),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: !isSupplied
@@ -1114,20 +1235,27 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                     ),
                                     alignment: Alignment.center,
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           Icons.warning_amber_rounded,
                                           size: 16,
-                                          color: !isSupplied ? AquaColors.statusPending : AquaColors.textMuted,
+                                          color: !isSupplied
+                                              ? AquaColors.statusPending
+                                              : AquaColors.textMuted,
                                         ),
                                         const SizedBox(width: 6),
                                         Text(
                                           'Falta abastecer',
                                           style: GoogleFonts.montserrat(
                                             fontSize: 12,
-                                            fontWeight: !isSupplied ? FontWeight.w700 : FontWeight.w500,
-                                            color: !isSupplied ? AquaColors.statusPending : AquaColors.textSecondary,
+                                            fontWeight: !isSupplied
+                                                ? FontWeight.w700
+                                                : FontWeight.w500,
+                                            color: !isSupplied
+                                                ? AquaColors.statusPending
+                                                : AquaColors.textSecondary,
                                           ),
                                         ),
                                       ],
@@ -1148,7 +1276,9 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
-                              decoration: _inputDecoration('Ej. Nivel bajo, Garrafón vacío'),
+                              decoration: _inputDecoration(
+                                'Ej. Nivel bajo, Garrafón vacío',
+                              ),
                             ),
                             const SizedBox(height: 12),
                           ],
@@ -1164,9 +1294,15 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                   brand: brandController.text.trim(),
                                   model: modelController.text.trim(),
                                   serialNumber: serialController.text.trim(),
-                                  status: isSupplied ? DispenserStatus.supplied : DispenserStatus.pending,
-                                  alertMessage: isSupplied ? '' : alertController.text.trim(),
-                                  lastSupplyInfo: isSupplied ? 'Actualizado hoy' : dispenser.lastSupplyInfo,
+                                  status: isSupplied
+                                      ? DispenserStatus.supplied
+                                      : DispenserStatus.pending,
+                                  alertMessage: isSupplied
+                                      ? ''
+                                      : alertController.text.trim(),
+                                  lastSupplyInfo: isSupplied
+                                      ? 'Actualizado hoy'
+                                      : dispenser.lastSupplyInfo,
                                 );
 
                                 updateDispenser(
@@ -1183,14 +1319,24 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                                   SnackBar(
                                     backgroundColor: AquaColors.turquoise,
                                     behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
                                     content: Row(
                                       children: [
-                                        const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                                        const Icon(
+                                          Icons.check_circle_rounded,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
                                         const SizedBox(width: 10),
                                         Text(
                                           'Despachador ${updated.id} guardado con éxito',
-                                          style: GoogleFonts.montserrat(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                                          style: GoogleFonts.montserrat(
+                                            color: Colors.white,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -1219,6 +1365,323 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
     );
   }
 
+  void _showAddEditZoneDialog({ZoneItem? existingZone}) {
+    final isEdit = existingZone != null;
+    final currentZone = existingZone;
+    final nameCtrl = TextEditingController(text: existingZone?.name ?? '');
+    final subtitleCtrl = TextEditingController(
+      text: existingZone?.subtitle ?? '',
+    );
+    String? error;
+    final oldName = existingZone?.name;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (dCtx, setDState) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: GlassCard(
+            borderRadius: 22,
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isEdit
+                            ? AquaColors.slateBlue.withValues(alpha: 0.12)
+                            : AquaColors.turquoise.withValues(alpha: 0.12),
+                      ),
+                      child: Icon(
+                        isEdit
+                            ? Icons.edit_location_alt_rounded
+                            : Icons.add_location_alt_rounded,
+                        size: 18,
+                        color: isEdit
+                            ? AquaColors.slateBlue
+                            : AquaColors.turquoise,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        isEdit ? 'Editar Zona' : 'Nueva Zona',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AquaColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        size: 18,
+                        color: AquaColors.textSecondary,
+                      ),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildZoneTextField(
+                  nameCtrl,
+                  'Nombre de la zona',
+                  'Ej. Calidad',
+                  Icons.place_rounded,
+                ),
+                const SizedBox(height: 10),
+                _buildZoneTextField(
+                  subtitleCtrl,
+                  'Descripción',
+                  'Ej. Laboratorio de análisis',
+                  Icons.notes_rounded,
+                ),
+                if (error != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    error!,
+                    style: GoogleFonts.montserrat(
+                      fontSize: 11,
+                      color: AquaColors.statusError,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 18),
+                AquaButton(
+                  text: isEdit ? 'Guardar cambios' : 'Agregar Zona',
+                  icon: isEdit ? Icons.save_rounded : Icons.add_rounded,
+                  onPressed: () {
+                    final name = nameCtrl.text.trim();
+                    if (name.isEmpty) {
+                      setDState(() => error = 'El nombre es requerido.');
+                      return;
+                    }
+                    final duplicate = kDefaultZones.any(
+                      (z) =>
+                          z.name.toLowerCase() == name.toLowerCase() &&
+                          z.name != oldName,
+                    );
+                    if (duplicate) {
+                      setDState(
+                        () => error = 'Ya existe una zona con ese nombre.',
+                      );
+                      return;
+                    }
+                    if (isEdit) {
+                      final updated = ZoneItem(
+                        name: name,
+                        subtitle: subtitleCtrl.text.trim().isEmpty
+                            ? currentZone!.subtitle
+                            : subtitleCtrl.text.trim(),
+                        dispensers: currentZone!.dispensers,
+                      );
+                      updateZone(oldName!, updated);
+                    } else {
+                      addZone(
+                        ZoneItem(
+                          name: name,
+                          subtitle: subtitleCtrl.text.trim().isEmpty
+                              ? 'Zona de abastecimiento'
+                              : subtitleCtrl.text.trim(),
+                          dispensers: [],
+                        ),
+                      );
+                    }
+                    Navigator.of(ctx).pop();
+                    setState(() {});
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: AquaColors.turquoise,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        content: Row(
+                          children: [
+                            const Icon(
+                              Icons.check_circle_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              isEdit
+                                  ? 'Zona "$name" actualizada'
+                                  : 'Zona "$name" agregada con éxito',
+                              style: GoogleFonts.montserrat(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                    if (isEdit) Navigator.of(context).maybePop();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmDeleteZone(ZoneItem zone) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: GlassCard(
+          borderRadius: 22,
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AquaColors.statusError.withValues(alpha: 0.12),
+                ),
+                child: const Icon(
+                  Icons.delete_rounded,
+                  color: AquaColors.statusError,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Eliminar zona "${zone.name}"',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.montserrat(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AquaColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Esta acción eliminará la zona y sus ${zone.totalDispensers} despachador(es). No se puede deshacer.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.montserrat(
+                  fontSize: 12,
+                  color: AquaColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: AquaButton(
+                      text: 'Cancelar',
+                      type: AquaButtonType.secondary,
+                      height: 44,
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: AquaButton(
+                      text: 'Eliminar',
+                      type: AquaButtonType.danger,
+                      height: 44,
+                      onPressed: () {
+                        deleteZone(zone.name);
+                        Navigator.of(ctx).pop();
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: AquaColors.statusError,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            content: Row(
+                              children: [
+                                const Icon(
+                                  Icons.delete_sweep_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'Zona "${zone.name}" eliminada',
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildZoneTextField(
+    TextEditingController ctrl,
+    String label,
+    String hint,
+    IconData icon,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AquaColors.glassBorder),
+      ),
+      child: TextField(
+        controller: ctrl,
+        style: GoogleFonts.montserrat(
+          fontSize: 13,
+          color: AquaColors.textPrimary,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          prefixIcon: Icon(icon, size: 18, color: AquaColors.slateBlue),
+          labelStyle: GoogleFonts.montserrat(
+            fontSize: 12,
+            color: AquaColors.textSecondary,
+          ),
+          hintStyle: GoogleFonts.montserrat(
+            fontSize: 12,
+            color: AquaColors.textMuted,
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildInputLabel(String label) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6.0),
@@ -1236,7 +1699,10 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: GoogleFonts.montserrat(color: AquaColors.textMuted, fontSize: 13),
+      hintStyle: GoogleFonts.montserrat(
+        color: AquaColors.textMuted,
+        fontSize: 13,
+      ),
       filled: true,
       fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -1296,7 +1762,9 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: AquaColors.glacier.withValues(alpha: 0.5),
-                  border: Border.all(color: AquaColors.slateBlue.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: AquaColors.slateBlue.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: const Icon(
                   Icons.history_rounded,

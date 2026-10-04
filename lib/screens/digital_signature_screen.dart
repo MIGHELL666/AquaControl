@@ -14,6 +14,8 @@ class DigitalSignatureScreen extends StatefulWidget {
   final int bottleCount;
   final bool isResupply;
   final String workerName;
+  final String clientName;
+  final double pricePerBottle;
 
   const DigitalSignatureScreen({
     super.key,
@@ -22,6 +24,8 @@ class DigitalSignatureScreen extends StatefulWidget {
     required this.bottleCount,
     this.isResupply = false,
     this.workerName = 'Juan Pérez',
+    this.clientName = '',
+    this.pricePerBottle = 0.0,
   });
 
   @override
@@ -63,6 +67,8 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
         recipientName: recipient,
         signaturePoints: _signaturePoints,
         workerName: widget.workerName,
+        clientName: widget.clientName,
+        pricePerBottle: widget.pricePerBottle,
       );
     } else {
       markDispenserSupplied(
@@ -71,6 +77,8 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
         recipientName: recipient,
         signaturePoints: _signaturePoints,
         workerName: widget.workerName,
+        clientName: widget.clientName,
+        pricePerBottle: widget.pricePerBottle,
       );
     }
 
@@ -183,6 +191,10 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
                       const SizedBox(height: 8),
                       _buildSummaryRow('Punto / Zona:', widget.pointName),
                       const SizedBox(height: 8),
+                      if (widget.clientName.isNotEmpty) ...[
+                        _buildSummaryRow('Cliente:', widget.clientName),
+                        const SizedBox(height: 8),
+                      ],
                       _buildSummaryRow(
                         widget.isResupply ? 'Garrafones a reabastecer:' : 'Garrafones entregados:',
                         '${widget.bottleCount} garrafones',

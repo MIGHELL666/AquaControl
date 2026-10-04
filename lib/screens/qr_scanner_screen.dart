@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/aqua_colors.dart';
 import '../widgets/aqua_background.dart';
-import '../widgets/aqua_button.dart';
-import '../widgets/glass_card.dart';
 import 'dispenser_detail_screen.dart';
-import 'role_selection_screen.dart';
 
 class QrScannerScreen extends StatefulWidget {
   const QrScannerScreen({super.key});
@@ -41,90 +38,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
     );
   }
 
-  void _confirmLogout(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dialogCtx) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-          child: GlassCard(
-            borderRadius: 24,
-            padding: const EdgeInsets.all(22),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AquaColors.turquoise.withValues(alpha: 0.12),
-                    border: Border.all(
-                      color: AquaColors.turquoise.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.logout_rounded,
-                    color: AquaColors.turquoise,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Cerrar sesión',
-                  style: GoogleFonts.montserrat(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AquaColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '¿Estás seguro de que deseas salir de tu sesión de trabajador?',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.montserrat(
-                    fontSize: 13,
-                    color: AquaColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 22),
-                Row(
-                  children: [
-                    Expanded(
-                      child: AquaButton(
-                        text: 'Cancelar',
-                        type: AquaButtonType.secondary,
-                        height: 46,
-                        onPressed: () => Navigator.of(dialogCtx).pop(),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: AquaButton(
-                        text: 'Salir',
-                        type: AquaButtonType.danger,
-                        height: 46,
-                        onPressed: () {
-                          Navigator.of(dialogCtx).pop();
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (_) => const RoleSelectionScreen(),
-                            ),
-                            (route) => false,
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -134,43 +48,15 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
           child: Column(
             children: [
-              // Header without back arrow + with Logout Button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Escanear QR',
-                    style: GoogleFonts.montserrat(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: AquaColors.textPrimary,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AquaColors.glacier.withValues(alpha: 0.5),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AquaColors.platinum),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AquaColors.shadowCard,
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.logout_rounded,
-                        size: 19,
-                        color: AquaColors.turquoise,
-                      ),
-                      tooltip: 'Cerrar sesión',
-                      onPressed: () => _confirmLogout(context),
-                    ),
-                  ),
-                ],
+              // Header
+              Text(
+                'Escanear QR',
+                style: GoogleFonts.montserrat(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AquaColors.textPrimary,
+                  letterSpacing: -0.3,
+                ),
               ),
               const Spacer(flex: 2),
 

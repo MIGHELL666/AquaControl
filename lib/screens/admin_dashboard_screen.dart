@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/zone_data.dart';
 import '../theme/aqua_colors.dart';
-import '../widgets/aqua_badge.dart';
 import '../widgets/aqua_button.dart';
 import '../widgets/glass_card.dart';
 import 'clients_screen.dart';
-import 'point_detail_screen.dart';
 import 'register_dispenser_screen.dart';
 import 'role_selection_screen.dart';
 import 'workers_management_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final VoidCallback? onNavigateToPoints;
+  final VoidCallback? onNavigateToHistory;
 
   const AdminDashboardScreen({
     super.key,
     this.onNavigateToPoints,
+    this.onNavigateToHistory,
   });
 
   @override
@@ -24,6 +24,8 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  String? _selectedClientId; // null representa 'Todos los clientes'
+
   void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
@@ -107,12 +109,178 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  void _showAddZoneDialog() {
+    final nameCtrl = TextEditingController();
+    final subtitleCtrl = TextEditingController();
+    String? error;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (dCtx, setDState) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: GlassCard(
+            borderRadius: 22,
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AquaColors.turquoise.withValues(alpha: 0.12),
+                      ),
+                      child: const Icon(
+                        Icons.add_location_alt_rounded,
+                        size: 18,
+                        color: AquaColors.turquoise,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Nueva Zona',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AquaColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        size: 18,
+                        color: AquaColors.textSecondary,
+                      ),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  nameCtrl,
+                  'Nombre de la zona',
+                  'Ej. Calidad',
+                  Icons.place_rounded,
+                ),
+                const SizedBox(height: 10),
+                _buildTextField(
+                  subtitleCtrl,
+                  'Descripción',
+                  'Ej. Laboratorio de análisis',
+                  Icons.notes_rounded,
+                ),
+                if (error != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    error!,
+                    style: GoogleFonts.montserrat(
+                      fontSize: 11,
+                      color: AquaColors.statusError,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 18),
+                AquaButton(
+                  text: 'Agregar Zona',
+                  icon: Icons.add_rounded,
+                  onPressed: () {
+                    final name = nameCtrl.text.trim();
+                    if (name.isEmpty) {
+                      setDState(() => error = 'El nombre es requerido.');
+                      return;
+                    }
+                    final exists = kDefaultZones.any(
+                      (z) => z.name.toLowerCase() == name.toLowerCase(),
+                    );
+                    if (exists) {
+                      setDState(
+                        () => error = 'Ya existe una zona con ese nombre.',
+                      );
+                      return;
+                    }
+                    addZone(
+                      ZoneItem(
+                        name: name,
+                        subtitle: subtitleCtrl.text.trim().isEmpty
+                            ? 'Zona de abastecimiento'
+                            : subtitleCtrl.text.trim(),
+                        dispensers: [],
+                      ),
+                    );
+                    Navigator.of(ctx).pop();
+                    setState(() {});
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(
+    TextEditingController ctrl,
+    String label,
+    String hint,
+    IconData icon,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AquaColors.glassBorder),
+      ),
+      child: TextField(
+        controller: ctrl,
+        style: GoogleFonts.montserrat(
+          fontSize: 13,
+          color: AquaColors.textPrimary,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          prefixIcon: Icon(icon, size: 18, color: AquaColors.slateBlue),
+          labelStyle: GoogleFonts.montserrat(
+            fontSize: 12,
+            color: AquaColors.textSecondary,
+          ),
+          hintStyle: GoogleFonts.montserrat(
+            fontSize: 12,
+            color: AquaColors.textMuted,
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final totalDispensers = getTotalDispensersCount();
-    final suppliedDispensers = getTotalSuppliedCount();
-    final pendingDispensers = getTotalPendingCount();
-    final totalBottles = getTotalBottlesCount();
+    // Cliente seleccionado para separar las métricas (Requerimiento 3)
+    ClientItem? selectedClient;
+    if (_selectedClientId != null) {
+      final idx = kDefaultClients.indexWhere((c) => c.id == _selectedClientId);
+      if (idx != -1) {
+        selectedClient = kDefaultClients[idx];
+      } else {
+        _selectedClientId = null;
+      }
+    }
+
+    final kpiMetrics = getKpisForClient(selectedClient);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
@@ -176,7 +344,204 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
+
+          // ── Selector de cliente para métricas (Requerimiento 3) ──
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.94),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: selectedClient != null
+                    ? AquaColors.turquoise.withValues(alpha: 0.6)
+                    : AquaColors.platinum,
+                width: selectedClient != null ? 1.4 : 1.0,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AquaColors.shadowCard,
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: selectedClient != null
+                            ? AquaColors.turquoise.withValues(alpha: 0.15)
+                            : AquaColors.glacier.withValues(alpha: 0.5),
+                      ),
+                      child: Icon(
+                        Icons.business_rounded,
+                        size: 17,
+                        color: selectedClient != null
+                            ? AquaColors.turquoise
+                            : AquaColors.slateBlue,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Métricas por cliente:',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: AquaColors.textSecondary,
+                            ),
+                          ),
+                          DropdownButtonHideUnderline(
+                            child: DropdownButton<String?>(
+                              value: _selectedClientId,
+                              isDense: true,
+                              isExpanded: true,
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                color: AquaColors.turquoise,
+                                size: 22,
+                              ),
+                              style: GoogleFonts.montserrat(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AquaColors.textPrimary,
+                              ),
+                              items: [
+                                DropdownMenuItem<String?>(
+                                  value: null,
+                                  child: Text(
+                                    '🌐 Todos los clientes (General)',
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: AquaColors.turquoise,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                ...kDefaultClients.map((client) {
+                                  return DropdownMenuItem<String?>(
+                                    value: client.id,
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            client.companyName,
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w600,
+                                              color: AquaColors.textPrimary,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 6, vertical: 1.5),
+                                          decoration: BoxDecoration(
+                                            color: client.isActive
+                                                ? AquaColors.statusSupplied
+                                                    .withValues(alpha: 0.12)
+                                                : Colors.amber
+                                                    .withValues(alpha: 0.18),
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            '${client.dispenserCount} desp.',
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: client.isActive
+                                                  ? AquaColors.statusSupplied
+                                                  : Colors.amber.shade900,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              ],
+                              onChanged: (val) {
+                                setState(() {
+                                  _selectedClientId = val;
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (_selectedClientId != null)
+                      IconButton(
+                        tooltip: 'Ver general',
+                        icon: const Icon(Icons.close_rounded,
+                            size: 18, color: AquaColors.textMuted),
+                        onPressed: () {
+                          setState(() {
+                            _selectedClientId = null;
+                          });
+                        },
+                      ),
+                  ],
+                ),
+                if (selectedClient != null) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AquaColors.glacier.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle_outline_rounded,
+                            size: 13, color: AquaColors.turquoise),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            'Mostrando despachadores de ${selectedClient.companyName}',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: AquaColors.textSecondary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            '${selectedClient.status} \u2022 \$${selectedClient.pricePerBottle.toStringAsFixed(2)}/garr.',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: AquaColors.turquoise,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
 
           // ── KPI Grid 2×2 ───────────────────────────────────
           Row(
@@ -184,8 +549,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Expanded(
                 child: _buildKpiCard(
                   icon: Icons.water_drop_rounded,
-                  value: '$totalDispensers',
-                  label: 'Total de\ndespachadores',
+                  value: '${kpiMetrics.totalDispensers}',
+                  label: selectedClient != null
+                      ? 'Despachadores\ndel cliente'
+                      : 'Total de\ndespachadores',
                   color: AquaColors.turquoise,
                 ),
               ),
@@ -193,7 +560,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Expanded(
                 child: _buildKpiCard(
                   icon: Icons.check_circle_rounded,
-                  value: '$suppliedDispensers',
+                  value: '${kpiMetrics.suppliedCount}',
                   label: 'Abastecidos',
                   color: AquaColors.statusSupplied,
                 ),
@@ -206,7 +573,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Expanded(
                 child: _buildKpiCard(
                   icon: Icons.schedule_rounded,
-                  value: '$pendingDispensers',
+                  value: '${kpiMetrics.pendingCount}',
                   label: 'Pendientes',
                   color: AquaColors.statusPending,
                 ),
@@ -215,29 +582,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Expanded(
                 child: _buildKpiCard(
                   icon: Icons.inventory_2_rounded,
-                  value: '$totalBottles',
-                  label: 'Total de\ngarrafones',
+                  value: '${kpiMetrics.totalBottles}',
+                  label: selectedClient != null
+                      ? 'Garrafones en\nsus despachadores'
+                      : 'Total de\ngarrafones',
                   color: AquaColors.slateBlue,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          // ── Botón Registrar Despachador ─────────────────────
-          AquaButton(
-            text: 'Registrar nuevo despachador',
-            icon: Icons.add_circle_outline_rounded,
-            onPressed: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const RegisterDispenserScreen(),
-                ),
-              );
-              setState(() {});
-            },
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
           // ── Acciones rápidas: Clientes & Trabajadores ───────
           Row(
@@ -250,9 +604,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   color: AquaColors.turquoise,
                   onTap: () async {
                     await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const ClientsScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const ClientsScreen()),
                     );
                     setState(() {});
                   },
@@ -277,52 +629,96 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
 
-          // ── Header: Zonas ─────────────────────────────────
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Zonas de abastecimiento',
-                style: GoogleFonts.montserrat(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: AquaColors.textPrimary,
+          // ── Botón Registrar Despachador — sutil, debajo de las tarjetas ──
+          GlassCard(
+            borderRadius: 14,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+            onTap: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const RegisterDispenserScreen(),
                 ),
-              ),
-              GestureDetector(
-                onTap: widget.onNavigateToPoints,
-                child: Row(
-                  children: [
-                    Text(
-                      'Ver todas',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AquaColors.turquoise,
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    const Icon(
-                      Icons.chevron_right_rounded,
-                      size: 16,
-                      color: AquaColors.turquoise,
-                    ),
-                  ],
+              );
+              setState(() {});
+            },
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AquaColors.turquoise.withValues(alpha: 0.10),
+                  ),
+                  child: const Icon(
+                    Icons.add_circle_outline_rounded,
+                    size: 17,
+                    color: AquaColors.turquoise,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Registrar nuevo despachador',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AquaColors.textSecondary,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: AquaColors.textMuted,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
 
-          // ── Lista de zonas ────────────────────────────────
-          ...kDefaultZones.map((zone) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10.0),
-              child: _buildZoneCard(context, zone),
-            );
-          }),
+          // ── Nueva Zona (tarjeta sutil estilo Registrar despachador) ──
+          GlassCard(
+            borderRadius: 14,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            onTap: _showAddZoneDialog,
+            borderColor: AquaColors.platinum,
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AquaColors.glacier.withValues(alpha: 0.55),
+                  ),
+                  child: const Icon(
+                    Icons.add_location_alt_outlined,
+                    size: 16,
+                    color: AquaColors.slateBlue,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Registrar nueva zona',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AquaColors.textSecondary,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: AquaColors.textMuted,
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 24),
         ],
       ),
@@ -423,120 +819,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Icons.chevron_right_rounded,
             size: 16,
             color: AquaColors.textMuted,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildZoneCard(BuildContext context, ZoneItem zone) {
-    final isFullySupplied = zone.isFullySupplied;
-    final progressVal = zone.totalDispensers > 0
-        ? zone.suppliedCount / zone.totalDispensers
-        : 0.0;
-
-    return GlassCard(
-      borderRadius: 16,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      borderColor: isFullySupplied
-          ? AquaColors.glassBorder
-          : AquaColors.statusPendingBorder,
-      onTap: () async {
-        await Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => PointDetailScreen(pointName: zone.name),
-          ),
-        );
-        setState(() {});
-      },
-      child: Column(
-        children: [
-          Row(
-            children: [
-              // Icono de zona
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isFullySupplied
-                      ? AquaColors.statusSuppliedBg
-                      : AquaColors.statusPendingBg,
-                ),
-                child: Icon(
-                  isFullySupplied
-                      ? Icons.location_on_rounded
-                      : Icons.warning_amber_rounded,
-                  size: 20,
-                  color: isFullySupplied
-                      ? AquaColors.statusSupplied
-                      : AquaColors.statusPending,
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              // Nombre y descripción
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Zona ${zone.name}',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AquaColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      isFullySupplied
-                          ? '${zone.totalDispensers} despachadores • Todos abastecidos'
-                          : '${zone.suppliedCount}/${zone.totalDispensers} abastecidos',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 11,
-                        color: isFullySupplied
-                            ? AquaColors.textMuted
-                            : AquaColors.statusPending,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-
-              // Badge estado
-              AquaBadge(
-                status: isFullySupplied
-                    ? SupplyStatus.supplied
-                    : SupplyStatus.pending,
-                customText: isFullySupplied
-                    ? 'OK'
-                    : 'Falta (${zone.pendingCount})',
-              ),
-              const SizedBox(width: 6),
-              const Icon(
-                Icons.chevron_right_rounded,
-                size: 16,
-                color: AquaColors.textMuted,
-              ),
-            ],
-          ),
-
-          // Barra de progreso
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progressVal,
-              minHeight: 5,
-              backgroundColor: AquaColors.platinum,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                isFullySupplied
-                    ? AquaColors.statusSupplied
-                    : AquaColors.turquoise,
-              ),
-            ),
           ),
         ],
       ),

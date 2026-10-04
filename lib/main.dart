@@ -1,6 +1,7 @@
+import 'dart:ui' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'screens/splash_screen.dart';
+import 'screens/role_selection_screen.dart';
 import 'theme/aqua_theme.dart';
 import 'theme/aqua_colors.dart';
 
@@ -26,7 +27,16 @@ class AquaControlApp extends StatelessWidget {
       title: 'AquaControl',
       debugShowCheckedModeBanner: false,
       theme: AquaTheme.lightTheme,
-      home: const SplashScreen(),
+      scrollBehavior: const MaterialScrollBehavior().copyWith(
+        physics: const BouncingScrollPhysics(),
+        dragDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.trackpad,
+          PointerDeviceKind.stylus,
+        },
+      ),
+      home: const RoleSelectionScreen(),
     );
   }
 }

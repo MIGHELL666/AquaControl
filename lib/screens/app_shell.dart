@@ -3,9 +3,8 @@ import '../widgets/aqua_background.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/zoom_container.dart';
 import 'admin_dashboard_screen.dart';
-import 'history_screen.dart';
-import 'settings_screen.dart';
 import 'supply_points_screen.dart';
+import 'worker_history_table_screen.dart';
 
 enum UserRole { admin, worker }
 
@@ -48,10 +47,10 @@ class _AppShellState extends State<AppShell> {
             children: [
               AdminDashboardScreen(
                 onNavigateToPoints: () => _onTabSelected(1),
+                onNavigateToHistory: () => _onTabSelected(2),
               ),
               const SupplyPointsScreen(),
-              const HistoryScreen(),
-              const SettingsScreen(),
+              const WorkerHistoryTableScreen(),
             ],
           ),
         ),
