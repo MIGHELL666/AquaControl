@@ -99,7 +99,20 @@ class SupplyRecord {
     this.pricePerBottle = 0.0,
   });
 
-  double get totalPrice => bottles * pricePerBottle;
+  double get effectivePricePerBottle {
+    if (pricePerBottle > 0) return pricePerBottle;
+    if (clientName.isNotEmpty) {
+      final idx = kDefaultClients.indexWhere(
+        (c) =>
+            c.companyName.trim().toLowerCase() ==
+            clientName.trim().toLowerCase(),
+      );
+      if (idx != -1) return kDefaultClients[idx].pricePerBottle;
+    }
+    return 0.0;
+  }
+
+  double get totalPrice => bottles * effectivePricePerBottle;
 
   String get dateFormatted =>
       '${timestamp.day.toString().padLeft(2, '0')}/${timestamp.month.toString().padLeft(2, '0')}/${timestamp.year}';
@@ -279,8 +292,9 @@ class ClientItem {
   bool get isActive => status.toLowerCase() == 'activo';
   bool get isInactive => !isActive;
 
-  int get dispenserCount =>
-      assignedDispenserIds.isNotEmpty ? assignedDispenserIds.length : activeDispensers;
+  int get dispenserCount => assignedDispenserIds.isNotEmpty
+      ? assignedDispenserIds.length
+      : activeDispensers;
 
   String get fullAddress {
     final parts = <String>[];
@@ -361,11 +375,22 @@ final List<ClientItem> kDefaultClients = [
     colonia: 'Las Américas',
     ciudad: 'Ciudad de México',
     pais: 'México',
-    address: 'Parque Industrial Las Américas #140, Col. Las Américas, C.P. 01210, Ciudad de México',
+    address:
+        'Parque Industrial Las Américas #140, Col. Las Américas, C.P. 01210, Ciudad de México',
     activeDispensers: 12,
     assignedDispenserIds: [
-      '#023', '#024', '#025', '#026', '#027', '#028',
-      '#029', '#030', '#031', '#032', '#033', '#034'
+      '#023',
+      '#024',
+      '#025',
+      '#026',
+      '#027',
+      '#028',
+      '#029',
+      '#030',
+      '#031',
+      '#032',
+      '#033',
+      '#034',
     ],
     deliveryFrequency: 'Diario',
     status: 'Activo',
@@ -387,10 +412,18 @@ final List<ClientItem> kDefaultClients = [
     colonia: 'Zona Industrial',
     ciudad: 'Monterrey, N.L.',
     pais: 'México',
-    address: 'Av. Las Industrias #520, Nave C, Col. Zona Industrial, C.P. 66220, Monterrey, N.L.',
+    address:
+        'Av. Las Industrias #520, Nave C, Col. Zona Industrial, C.P. 66220, Monterrey, N.L.',
     activeDispensers: 8,
     assignedDispenserIds: [
-      '#035', '#036', '#037', '#018', '#019', '#020', '#021', '#022'
+      '#035',
+      '#036',
+      '#037',
+      '#018',
+      '#019',
+      '#020',
+      '#021',
+      '#022',
     ],
     deliveryFrequency: 'Cada 2 días',
     status: 'Activo',
@@ -412,12 +445,25 @@ final List<ClientItem> kDefaultClients = [
     colonia: 'Sector Salud',
     ciudad: 'Guadalajara, Jal.',
     pais: 'México',
-    address: 'Calzada Médica #890, Col. Sector Salud, C.P. 44100, Guadalajara, Jal.',
+    address:
+        'Calzada Médica #890, Col. Sector Salud, C.P. 44100, Guadalajara, Jal.',
     activeDispensers: 15,
     assignedDispenserIds: [
-      '#005', '#006', '#007', '#008', '#009', '#010',
-      '#011', '#012', '#046', '#047', '#038', '#039',
-      '#040', '#041', '#048'
+      '#005',
+      '#006',
+      '#007',
+      '#008',
+      '#009',
+      '#010',
+      '#011',
+      '#012',
+      '#046',
+      '#047',
+      '#038',
+      '#039',
+      '#040',
+      '#041',
+      '#048',
     ],
     deliveryFrequency: 'Diario',
     status: 'Activo',
@@ -439,11 +485,10 @@ final List<ClientItem> kDefaultClients = [
     colonia: 'Crédito Constructor',
     ciudad: 'Ciudad de México',
     pais: 'México',
-    address: 'Av. Insurgentes Sur #1602 Piso 6, Col. Crédito Constructor, C.P. 03900, Ciudad de México',
+    address:
+        'Av. Insurgentes Sur #1602 Piso 6, Col. Crédito Constructor, C.P. 03900, Ciudad de México',
     activeDispensers: 6,
-    assignedDispenserIds: [
-      '#001', '#002', '#003', '#004', '#049', '#050'
-    ],
+    assignedDispenserIds: ['#001', '#002', '#003', '#004', '#049', '#050'],
     deliveryFrequency: 'Semanal',
     status: 'Activo',
     notes: 'Acceso por recepción con gafete de visitante.',
@@ -464,10 +509,19 @@ final List<ClientItem> kDefaultClients = [
     colonia: 'Parque Logístico Bajío',
     ciudad: 'León, Gto.',
     pais: 'México',
-    address: 'Carretera Federal 45 Km 24, Col. Parque Logístico Bajío, C.P. 37290, León, Gto.',
+    address:
+        'Carretera Federal 45 Km 24, Col. Parque Logístico Bajío, C.P. 37290, León, Gto.',
     activeDispensers: 9,
     assignedDispenserIds: [
-      '#042', '#043', '#044', '#013', '#014', '#015', '#016', '#017', '#045'
+      '#042',
+      '#043',
+      '#044',
+      '#013',
+      '#014',
+      '#015',
+      '#016',
+      '#017',
+      '#045',
     ],
     deliveryFrequency: 'Cada 2 días',
     status: 'Activo',
@@ -664,7 +718,13 @@ final List<WorkerItem> kDefaultWorkers = [
     email: 'juan.perez@aquacontrol.com',
     assignedZone: 'Producción',
     shift: 'Matutino',
-    assignedClients: ['Bimbo Planta Norte', 'Manufacturas Sigma', 'Hospital San José', 'TechCorp Soluciones', 'Logística & Distribución Bajío'],
+    assignedClients: [
+      'Bimbo Planta Norte',
+      'Manufacturas Sigma',
+      'Hospital San José',
+      'TechCorp Soluciones',
+      'Logística & Distribución Bajío',
+    ],
   ),
   const WorkerItem(
     id: 'WRK-002',
@@ -674,7 +734,13 @@ final List<WorkerItem> kDefaultWorkers = [
     email: 'carlos.lopez@aquacontrol.com',
     assignedZone: 'Almacén',
     shift: 'Vespertino',
-    assignedClients: ['Bimbo Planta Norte', 'Manufacturas Sigma', 'Hospital San José', 'TechCorp Soluciones', 'Logística & Distribución Bajío'],
+    assignedClients: [
+      'Bimbo Planta Norte',
+      'Manufacturas Sigma',
+      'Hospital San José',
+      'TechCorp Soluciones',
+      'Logística & Distribución Bajío',
+    ],
   ),
   const WorkerItem(
     id: 'WRK-003',
@@ -684,7 +750,13 @@ final List<WorkerItem> kDefaultWorkers = [
     email: 'pedro.garcia@aquacontrol.com',
     assignedZone: 'Calidad',
     shift: 'Matutino',
-    assignedClients: ['Bimbo Planta Norte', 'Manufacturas Sigma', 'Hospital San José', 'TechCorp Soluciones', 'Logística & Distribución Bajío'],
+    assignedClients: [
+      'Bimbo Planta Norte',
+      'Manufacturas Sigma',
+      'Hospital San José',
+      'TechCorp Soluciones',
+      'Logística & Distribución Bajío',
+    ],
   ),
   const WorkerItem(
     id: 'WRK-004',
@@ -694,7 +766,13 @@ final List<WorkerItem> kDefaultWorkers = [
     email: 'miguel.h@aquacontrol.com',
     assignedZone: 'Oficinas',
     shift: 'Mixto',
-    assignedClients: ['Bimbo Planta Norte', 'Manufacturas Sigma', 'Hospital San José', 'TechCorp Soluciones', 'Logística & Distribución Bajío'],
+    assignedClients: [
+      'Bimbo Planta Norte',
+      'Manufacturas Sigma',
+      'Hospital San José',
+      'TechCorp Soluciones',
+      'Logística & Distribución Bajío',
+    ],
   ),
   const WorkerItem(
     id: 'WRK-005',
@@ -704,7 +782,13 @@ final List<WorkerItem> kDefaultWorkers = [
     email: 'lucia.m@aquacontrol.com',
     assignedZone: 'Taller',
     shift: 'Matutino',
-    assignedClients: ['Bimbo Planta Norte', 'Manufacturas Sigma', 'Hospital San José', 'TechCorp Soluciones', 'Logística & Distribución Bajío'],
+    assignedClients: [
+      'Bimbo Planta Norte',
+      'Manufacturas Sigma',
+      'Hospital San José',
+      'TechCorp Soluciones',
+      'Logística & Distribución Bajío',
+    ],
   ),
 ];
 

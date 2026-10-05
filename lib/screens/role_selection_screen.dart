@@ -14,131 +14,132 @@ class RoleSelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: AquaBackground(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              if (Navigator.of(context).canPop())
-                IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new,
-                    size: 18,
-                    color: AquaColors.textSecondary,
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
-                )
-              else
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                if (Navigator.of(context).canPop())
+                  IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new,
+                      size: 18,
+                      color: AquaColors.textSecondary,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  )
+                else
+                  const SizedBox(height: 16),
                 const SizedBox(height: 16),
-              const SizedBox(height: 16),
 
-              // Header con logo
-              Center(
-                child: Column(
-                  children: [
-                    // Logo pequeño
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.80),
-                        border: Border.all(
-                          color: AquaColors.glassBorder,
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AquaColors.turquoise.withValues(alpha: 0.20),
-                            blurRadius: 20,
-                            offset: const Offset(0, 4),
+                // Header con logo
+                Center(
+                  child: Column(
+                    children: [
+                      // Logo pequeño (gota)
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.80),
+                          border: Border.all(
+                            color: AquaColors.glassBorder,
+                            width: 1.5,
                           ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: AquaLogo(
-                          size: 40,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AquaColors.turquoise.withValues(
+                                alpha: 0.20,
+                              ),
+                              blurRadius: 20,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: AquaLogo(size: 40),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 18),
-                    Text(
-                      'AquaControl',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: AquaColors.textPrimary,
-                        letterSpacing: 0.3,
+                      const SizedBox(height: 14),
+                      // Logotipo CGWATER
+                      Image.asset(
+                        'assets/images/cgwater_logo.png',
+                        height: 90,
+                        fit: BoxFit.contain,
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Selecciona tu perfil para continuar',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 13,
-                        color: AquaColors.textMuted,
-                        fontWeight: FontWeight.w400,
+                      const SizedBox(height: 10),
+                      Text(
+                        'Selecciona tu perfil para continuar',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 13,
+                          color: AquaColors.textMuted,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 48),
-
-              // Tarjeta: Administrador
-              _buildRoleCard(
-                context: context,
-                icon: Icons.shield_rounded,
-                title: 'Administrador',
-                subtitle: 'Gestión de zonas, clientes y reportes operativos',
-                color: AquaColors.turquoise,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const LoginScreen(
-                        initialRole: UserRole.admin,
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 18),
-
-              // Tarjeta: Trabajador
-              _buildRoleCard(
-                context: context,
-                icon: Icons.local_shipping_rounded,
-                title: 'Trabajador',
-                subtitle: 'Escanea QR y registra abastecimientos de garrafones',
-                color: AquaColors.slateBlue,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const LoginScreen(
-                        initialRole: UserRole.worker,
-                      ),
-                    ),
-                  );
-                },
-              ),
-
-              const Spacer(),
-
-              // Footer
-              Center(
-                child: Text(
-                  'Purificadora de Agua © 2026',
-                  style: GoogleFonts.montserrat(
-                    fontSize: 11,
-                    color: AquaColors.textMuted,
-                    letterSpacing: 0.3,
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 32),
-            ],
+
+                const SizedBox(height: 36),
+
+                // Tarjeta: Administrador
+                _buildRoleCard(
+                  context: context,
+                  icon: Icons.shield_rounded,
+                  title: 'Administrador',
+                  subtitle:
+                      'Gestión de zonas, clientes y reportes operativos',
+                  color: AquaColors.turquoise,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const LoginScreen(
+                          initialRole: UserRole.admin,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Tarjeta: Trabajador
+                _buildRoleCard(
+                  context: context,
+                  icon: Icons.local_shipping_rounded,
+                  title: 'Trabajador',
+                  subtitle:
+                      'Escanea QR y registra abastecimientos de garrafones',
+                  color: AquaColors.slateBlue,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const LoginScreen(
+                          initialRole: UserRole.worker,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                const Spacer(),
+
+                // Footer
+                Center(
+                  child: Text(
+                    'Purificadora de Agua © 2026',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 11,
+                      color: AquaColors.textMuted,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),
@@ -178,11 +179,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 width: 1.5,
               ),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 26,
-            ),
+            child: Icon(icon, color: color, size: 26),
           ),
           const SizedBox(width: 16),
 

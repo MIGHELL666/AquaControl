@@ -85,7 +85,7 @@ class TablePdfPrinter {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
-                  'AquaControl — Reporte de Abastecimientos',
+                  'AquaControl - Reporte de Abastecimientos',
                   style: pw.TextStyle(
                     fontSize: 18,
                     fontWeight: pw.FontWeight.bold,
@@ -303,7 +303,7 @@ class TablePdfPrinter {
         ? pw.Padding(
             padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 10),
             child: pw.Text(
-              '— Sin firma —',
+              'Sin firma',
               style: pw.TextStyle(
                 fontSize: 8,
                 color: PdfColor.fromInt(0xFF648494),

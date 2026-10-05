@@ -5,8 +5,12 @@ import 'screens/role_selection_screen.dart';
 import 'theme/aqua_theme.dart';
 import 'theme/aqua_colors.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -24,7 +28,7 @@ class AquaControlApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AquaControl',
+      title: 'Aqua Control',
       debugShowCheckedModeBanner: false,
       theme: AquaTheme.lightTheme,
       scrollBehavior: const MaterialScrollBehavior().copyWith(

@@ -230,118 +230,128 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
                             ),
                           );
                         },
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isSupplied
-                                    ? AquaColors.statusSuppliedBg
-                                    : AquaColors.statusPendingBg,
-                              ),
-                              child: Icon(
-                                isSupplied
-                                    ? Icons.location_on_rounded
-                                    : Icons.warning_amber_rounded,
-                                color: isSupplied
-                                    ? AquaColors.statusSupplied
-                                    : AquaColors.statusPending,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item.title,
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: AquaColors.textPrimary,
-                                    ),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isSupplied
+                                        ? AquaColors.statusSuppliedBg
+                                        : AquaColors.statusPendingBg,
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    item.subtitle,
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: 11,
-                                      color: AquaColors.textMuted,
-                                    ),
+                                  child: Icon(
+                                    isSupplied
+                                        ? Icons.location_on_rounded
+                                        : Icons.warning_amber_rounded,
+                                    color: isSupplied
+                                        ? AquaColors.statusSupplied
+                                        : AquaColors.statusPending,
+                                    size: 20,
                                   ),
-                                ],
-                              ),
-                            ),
+                                ),
+                                const SizedBox(width: 12),
 
-                            AquaBadge(status: item.status),
-                            PopupMenuButton<String>(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(
-                                Icons.more_vert_rounded,
-                                size: 18,
-                                color: AquaColors.textMuted,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              itemBuilder: (_) => [
-                                PopupMenuItem<String>(
-                                  value: 'edit',
-                                  child: Row(
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      const Icon(
-                                        Icons.edit_rounded,
-                                        size: 16,
-                                        color: AquaColors.slateBlue,
-                                      ),
-                                      const SizedBox(width: 8),
                                       Text(
-                                        'Editar zona',
+                                        item.title,
                                         style: GoogleFonts.montserrat(
-                                          fontSize: 13,
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: AquaColors.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        item.subtitle,
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 11.5,
+                                          color: AquaColors.textMuted,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                PopupMenuItem<String>(
-                                  value: 'delete',
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.delete_rounded,
-                                        size: 16,
-                                        color: AquaColors.statusError,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Eliminar zona',
-                                        style: GoogleFonts.montserrat(
-                                          fontSize: 13,
-                                          color: AquaColors.statusError,
-                                        ),
-                                      ),
-                                    ],
+
+                                PopupMenuButton<String>(
+                                  padding: EdgeInsets.zero,
+                                  icon: const Icon(
+                                    Icons.more_vert_rounded,
+                                    size: 18,
+                                    color: AquaColors.textMuted,
                                   ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  itemBuilder: (_) => [
+                                    PopupMenuItem<String>(
+                                      value: 'edit',
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.edit_rounded,
+                                            size: 16,
+                                            color: AquaColors.slateBlue,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Editar zona',
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuItem<String>(
+                                      value: 'delete',
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.delete_rounded,
+                                            size: 16,
+                                            color: AquaColors.statusError,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Eliminar zona',
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 13,
+                                              color: AquaColors.statusError,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                  onSelected: (val) {
+                                    if (val == 'edit') {
+                                      _showAddEditZoneDialog(existingZone: zone);
+                                    } else if (val == 'delete') {
+                                      _confirmDeleteZone(zone);
+                                    }
+                                  },
+                                ),
+                                const SizedBox(width: 2),
+                                const Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 16,
+                                  color: AquaColors.textMuted,
                                 ),
                               ],
-                              onSelected: (val) {
-                                if (val == 'edit') {
-                                  _showAddEditZoneDialog(existingZone: zone);
-                                } else if (val == 'delete') {
-                                  _confirmDeleteZone(zone);
-                                }
-                              },
                             ),
-                            const SizedBox(width: 2),
-                            const Icon(
-                              Icons.chevron_right_rounded,
-                              size: 16,
-                              color: AquaColors.textMuted,
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 50),
+                              child: AquaBadge(status: item.status),
                             ),
                           ],
                         ),

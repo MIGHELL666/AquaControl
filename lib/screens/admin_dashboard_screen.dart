@@ -346,42 +346,52 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
           const SizedBox(height: 18),
 
-          // ── Selector de cliente para métricas (Requerimiento 3) ──
+          // ── Selector de cliente para métricas (Glassmorphic) ──
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.94),
-              borderRadius: BorderRadius.circular(16),
+              color: Colors.white.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: selectedClient != null
-                    ? AquaColors.turquoise.withValues(alpha: 0.6)
-                    : AquaColors.platinum,
-                width: selectedClient != null ? 1.4 : 1.0,
+                    ? AquaColors.turquoise.withValues(alpha: 0.55)
+                    : Colors.white.withValues(alpha: 0.9),
+                width: selectedClient != null ? 1.5 : 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AquaColors.shadowCard,
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: selectedClient != null
+                      ? AquaColors.turquoise.withValues(alpha: 0.16)
+                      : AquaColors.shadowCard,
+                  blurRadius: selectedClient != null ? 18 : 10,
+                  offset: const Offset(0, 4),
+                ),
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  blurRadius: 1,
+                  offset: const Offset(0, 1),
                 ),
               ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Fila superior: Ícono de categoría + Label + Botón de limpiar
                 Row(
                   children: [
                     Container(
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(10),
                         color: selectedClient != null
-                            ? AquaColors.turquoise.withValues(alpha: 0.15)
-                            : AquaColors.glacier.withValues(alpha: 0.5),
+                            ? AquaColors.turquoise.withValues(alpha: 0.16)
+                            : AquaColors.glacier.withValues(alpha: 0.6),
                       ),
                       child: Icon(
-                        Icons.business_rounded,
+                        selectedClient != null
+                            ? Icons.domain_rounded
+                            : Icons.travel_explore_rounded,
                         size: 17,
                         color: selectedClient != null
                             ? AquaColors.turquoise
@@ -394,127 +404,395 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Métricas por cliente:',
+                            'FILTRAR MÉTRICAS',
                             style: GoogleFonts.montserrat(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w600,
-                              color: AquaColors.textSecondary,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: AquaColors.textMuted,
                             ),
                           ),
-                          DropdownButtonHideUnderline(
-                            child: DropdownButton<String?>(
-                              value: _selectedClientId,
-                              isDense: true,
-                              isExpanded: true,
-                              icon: const Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                color: AquaColors.turquoise,
-                                size: 22,
-                              ),
-                              style: GoogleFonts.montserrat(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: AquaColors.textPrimary,
-                              ),
-                              items: [
-                                DropdownMenuItem<String?>(
-                                  value: null,
-                                  child: Text(
-                                    '🌐 Todos los clientes (General)',
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: AquaColors.turquoise,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                ...kDefaultClients.map((client) {
-                                  return DropdownMenuItem<String?>(
-                                    value: client.id,
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            client.companyName,
-                                            style: GoogleFonts.montserrat(
-                                              fontSize: 12.5,
-                                              fontWeight: FontWeight.w600,
-                                              color: AquaColors.textPrimary,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 6, vertical: 1.5),
-                                          decoration: BoxDecoration(
-                                            color: client.isActive
-                                                ? AquaColors.statusSupplied
-                                                    .withValues(alpha: 0.12)
-                                                : Colors.amber
-                                                    .withValues(alpha: 0.18),
-                                            borderRadius:
-                                                BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            '${client.dispenserCount} desp.',
-                                            style: GoogleFonts.montserrat(
-                                              fontSize: 9.5,
-                                              fontWeight: FontWeight.w700,
-                                              color: client.isActive
-                                                  ? AquaColors.statusSupplied
-                                                  : Colors.amber.shade900,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }),
-                              ],
-                              onChanged: (val) {
-                                setState(() {
-                                  _selectedClientId = val;
-                                });
-                              },
+                          Text(
+                            selectedClient != null
+                                ? 'Filtro específico por cliente'
+                                : 'Métricas globales de la empresa',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: selectedClient != null
+                                  ? AquaColors.turquoise
+                                  : AquaColors.textSecondary,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    if (_selectedClientId != null)
-                      IconButton(
-                        tooltip: 'Ver general',
-                        icon: const Icon(Icons.close_rounded,
-                            size: 18, color: AquaColors.textMuted),
-                        onPressed: () {
-                          setState(() {
-                            _selectedClientId = null;
-                          });
-                        },
-                      ),
                   ],
                 ),
+                const SizedBox(height: 10),
+
+                // Campo Dropdown Glassmorphic anclado siempre hacia abajo
+                LayoutBuilder(
+                  builder: (context, boxConstraints) {
+                    return PopupMenuButton<String?>(
+                      position: PopupMenuPosition.under,
+                      offset: const Offset(0, 6),
+                      color: Colors.white,
+                      elevation: 12,
+                      shadowColor: AquaColors.turquoise.withValues(alpha: 0.18),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        side: const BorderSide(
+                          color: AquaColors.glassBorder,
+                          width: 1,
+                        ),
+                      ),
+                      constraints: BoxConstraints(
+                        minWidth: boxConstraints.maxWidth,
+                        maxWidth: boxConstraints.maxWidth,
+                        maxHeight: 380,
+                      ),
+                      tooltip: 'Seleccionar cliente',
+                      onSelected: (val) {
+                        setState(() {
+                          _selectedClientId = (val == null || val == 'all')
+                              ? null
+                              : val;
+                        });
+                      },
+                      itemBuilder: (BuildContext context) {
+                        return [
+                          PopupMenuItem<String?>(
+                            value: 'all',
+                            height: 56,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _selectedClientId == null
+                                    ? AquaColors.turquoise.withValues(
+                                        alpha: 0.08,
+                                      )
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 34,
+                                    height: 34,
+                                    decoration: BoxDecoration(
+                                      color: _selectedClientId == null
+                                          ? AquaColors.turquoise.withValues(
+                                              alpha: 0.16,
+                                            )
+                                          : AquaColors.glacier.withValues(
+                                              alpha: 0.5,
+                                            ),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      Icons.public_rounded,
+                                      size: 18,
+                                      color: _selectedClientId == null
+                                          ? AquaColors.turquoise
+                                          : AquaColors.slateBlue,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'Todos los clientes',
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: 13,
+                                            fontWeight:
+                                                _selectedClientId == null
+                                                ? FontWeight.w700
+                                                : FontWeight.w600,
+                                            color: _selectedClientId == null
+                                                ? AquaColors.turquoise
+                                                : AquaColors.textPrimary,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          'Métricas globales acumuladas',
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: 10.5,
+                                            color: AquaColors.textMuted,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (_selectedClientId == null)
+                                    const Icon(
+                                      Icons.check_circle_rounded,
+                                      size: 18,
+                                      color: AquaColors.turquoise,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          ...kDefaultClients.map((client) {
+                            final isSelected = _selectedClientId == client.id;
+                            return PopupMenuItem<String?>(
+                              value: client.id,
+                              height: 56,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AquaColors.turquoise.withValues(
+                                          alpha: 0.08,
+                                        )
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 34,
+                                      height: 34,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? AquaColors.turquoise.withValues(
+                                                alpha: 0.16,
+                                              )
+                                            : AquaColors.iceBlue,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? AquaColors.turquoise.withValues(
+                                                  alpha: 0.4,
+                                                )
+                                              : AquaColors.glassBorder,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          client.companyName.isNotEmpty
+                                              ? client.companyName[0]
+                                                    .toUpperCase()
+                                              : 'C',
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w800,
+                                            color: isSelected
+                                                ? AquaColors.turquoise
+                                                : AquaColors.slateBlue,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            client.companyName,
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 12.5,
+                                              fontWeight: isSelected
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w600,
+                                              color: isSelected
+                                                  ? AquaColors.turquoise
+                                                  : AquaColors.textPrimary,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Text(
+                                            '${client.dispenserCount} despachadores • \$${client.pricePerBottle.toStringAsFixed(2)}/garr.',
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 10.5,
+                                              color: AquaColors.textMuted,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 2.5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: client.isActive
+                                            ? AquaColors.statusSupplied
+                                                  .withValues(alpha: 0.12)
+                                            : Colors.amber.withValues(
+                                                alpha: 0.18,
+                                              ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        client.isActive ? 'Activo' : 'Pausado',
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: client.isActive
+                                              ? AquaColors.statusSupplied
+                                              : Colors.amber.shade900,
+                                        ),
+                                      ),
+                                    ),
+                                    if (isSelected) ...[
+                                      const SizedBox(width: 8),
+                                      const Icon(
+                                        Icons.check_circle_rounded,
+                                        size: 18,
+                                        color: AquaColors.turquoise,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                        ];
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AquaColors.iceBlue.withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: selectedClient != null
+                                ? AquaColors.turquoise.withValues(alpha: 0.35)
+                                : AquaColors.platinum.withValues(alpha: 0.8),
+                            width: 1.0,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              selectedClient != null
+                                  ? Icons.business_rounded
+                                  : Icons.public_rounded,
+                              size: 16,
+                              color: AquaColors.turquoise,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                selectedClient != null
+                                    ? selectedClient.companyName
+                                    : 'Todos los clientes (General)',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: selectedClient != null
+                                      ? AquaColors.textPrimary
+                                      : AquaColors.turquoise,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (selectedClient != null)
+                              Container(
+                                margin: const EdgeInsets.only(
+                                  left: 6,
+                                  right: 8,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AquaColors.turquoise.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '${selectedClient.dispenserCount} desp.',
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: AquaColors.turquoise,
+                                  ),
+                                ),
+                              ),
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: AquaColors.turquoise.withValues(
+                                  alpha: 0.12,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                color: AquaColors.turquoise,
+                                size: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                // Pill informativo si un cliente está seleccionado
                 if (selectedClient != null) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
-                      color: AquaColors.glacier.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(8),
+                      color: AquaColors.turquoise.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AquaColors.turquoise.withValues(alpha: 0.25),
+                        width: 1,
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.check_circle_outline_rounded,
-                            size: 13, color: AquaColors.turquoise),
-                        const SizedBox(width: 5),
+                        const Icon(
+                          Icons.check_circle_outline_rounded,
+                          size: 14,
+                          color: AquaColors.turquoise,
+                        ),
+                        const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             'Mostrando despachadores de ${selectedClient.companyName}',
                             style: GoogleFonts.montserrat(
-                              fontSize: 10.5,
+                              fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: AquaColors.textSecondary,
                             ),
@@ -522,17 +800,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            '${selectedClient.status} \u2022 \$${selectedClient.pricePerBottle.toStringAsFixed(2)}/garr.',
-                            style: GoogleFonts.montserrat(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: AquaColors.turquoise,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
+                        Text(
+                          '${selectedClient.status} \u2022 \$${selectedClient.pricePerBottle.toStringAsFixed(2)}/garr.',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AquaColors.turquoise,
                           ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ],
                     ),

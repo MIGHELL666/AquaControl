@@ -9,10 +9,7 @@ import '../widgets/signature_pad.dart';
 class WorkerHistoryTableScreen extends StatefulWidget {
   final bool showFinancials;
 
-  const WorkerHistoryTableScreen({
-    super.key,
-    this.showFinancials = true,
-  });
+  const WorkerHistoryTableScreen({super.key, this.showFinancials = true});
 
   @override
   State<WorkerHistoryTableScreen> createState() =>
@@ -21,20 +18,20 @@ class WorkerHistoryTableScreen extends StatefulWidget {
 
 class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
   int _selectedView = 0; // 0 = Tabla, 1 = Gráfica de barras
-  String _filterZone = 'Todas';
+  String? _filterClient; // null o 'all' = Todos los clientes
 
   List<SupplyRecord> get _filteredRecords {
-    if (_filterZone == 'Todas') return kSupplyRecords;
-    return kSupplyRecords.where((r) => r.zoneName == _filterZone).toList();
+    return kSupplyRecords.where((r) {
+      final matchesClient =
+          _filterClient == null ||
+          _filterClient == 'all' ||
+          r.clientName.trim().toLowerCase() ==
+              _filterClient!.trim().toLowerCase();
+      return matchesClient;
+    }).toList();
   }
 
-  int get _totalBottles {
-    return _filteredRecords.fold(0, (sum, r) => sum + r.bottles);
-  }
 
-  double get _totalAmount {
-    return _filteredRecords.fold(0.0, (sum, r) => sum + r.totalPrice);
-  }
 
   void _showSignatureDialog(SupplyRecord record) {
     showDialog(
@@ -219,7 +216,9 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
   Widget build(BuildContext context) {
     final records = _filteredRecords;
     final screenWidth = MediaQuery.of(context).size.width;
-    final hPadding = screenWidth < 360 ? 12.0 : (screenWidth < 600 ? 16.0 : 20.0);
+    final hPadding = screenWidth < 360
+        ? 12.0
+        : (screenWidth < 600 ? 16.0 : 20.0);
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: 12.0),
@@ -264,82 +263,7 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(
-                    child: Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        if (widget.showFinancials)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AquaColors.statusSupplied.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: AquaColors.statusSupplied.withValues(
-                                  alpha: 0.32,
-                                ),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.attach_money_rounded,
-                                  size: 12,
-                                  color: AquaColors.statusSupplied,
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  '\$${_totalAmount.toStringAsFixed(0)}',
-                                  style: GoogleFonts.montserrat(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: AquaColors.statusSupplied,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AquaColors.glacier.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: AquaColors.slateBlue.withValues(alpha: 0.35),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.water_drop_outlined,
-                                size: 12,
-                                color: AquaColors.slateBlue,
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                '$_totalBottles',
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: AquaColors.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  const Spacer(),
                   const SizedBox(width: 8),
                   PopupMenuButton<int>(
                     padding: EdgeInsets.zero,
@@ -491,50 +415,240 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
           ),
           const SizedBox(height: 12),
 
-          // Quick Zone Filter Pills
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
+          // Selector de Cliente (Requerimiento de Filtrado por Empresa)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.94),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _filterClient != null && _filterClient != 'all'
+                    ? AquaColors.turquoise.withValues(alpha: 0.6)
+                    : AquaColors.platinum,
+                width: _filterClient != null && _filterClient != 'all'
+                    ? 1.4
+                    : 1.0,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: _filterClient != null && _filterClient != 'all'
+                      ? AquaColors.turquoise.withValues(alpha: 0.12)
+                      : AquaColors.shadowCard,
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
             child: Row(
-              children:
-                  [
-                    'Todas',
-                    'Producción',
-                    'Almacén',
-                    'Calidad',
-                    'Taller',
-                    'Oficinas',
-                  ].map((zone) {
-                    final isSel = _filterZone == zone;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 6.0),
-                      child: ChoiceChip(
-                        label: Text(
-                          zone,
-                          style: GoogleFonts.montserrat(
-                            fontSize: 11,
-                            fontWeight: isSel
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: isSel
-                                ? Colors.white
-                                : AquaColors.textPrimary,
-                          ),
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: _filterClient != null && _filterClient != 'all'
+                        ? AquaColors.turquoise.withValues(alpha: 0.16)
+                        : AquaColors.glacier.withValues(alpha: 0.6),
+                  ),
+                  child: Icon(
+                    Icons.business_rounded,
+                    size: 16,
+                    color: _filterClient != null && _filterClient != 'all'
+                        ? AquaColors.turquoise
+                        : AquaColors.slateBlue,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'FILTRAR POR CLIENTE',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: AquaColors.textMuted,
                         ),
-                        selected: isSel,
-                        selectedColor: AquaColors.turquoise,
-                        backgroundColor: AquaColors.glacier.withValues(
-                          alpha: 0.4,
-                        ),
-                        side: BorderSide(
-                          color: isSel
-                              ? AquaColors.turquoise
-                              : AquaColors.platinum,
-                          width: 1.2,
-                        ),
-                        onSelected: (_) => setState(() => _filterZone = zone),
                       ),
-                    );
-                  }).toList(),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          return PopupMenuButton<String>(
+                            position: PopupMenuPosition.under,
+                            offset: const Offset(0, 6),
+                            color: Colors.white,
+                            elevation: 12,
+                            shadowColor: AquaColors.turquoise.withValues(
+                              alpha: 0.18,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: const BorderSide(
+                                color: AquaColors.glassBorder,
+                                width: 1,
+                              ),
+                            ),
+                            constraints: BoxConstraints(
+                              minWidth: constraints.maxWidth,
+                              maxWidth: constraints.maxWidth,
+                              maxHeight: 350,
+                            ),
+                            tooltip: 'Seleccionar cliente',
+                            onSelected: (val) {
+                              setState(() {
+                                _filterClient = (val == 'all') ? null : val;
+                              });
+                            },
+                            itemBuilder: (_) => [
+                              PopupMenuItem<String>(
+                                value: 'all',
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.public_rounded,
+                                      size: 16,
+                                      color: AquaColors.turquoise,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Todos los clientes',
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 12.5,
+                                          fontWeight:
+                                              _filterClient == null ||
+                                                  _filterClient == 'all'
+                                              ? FontWeight.w700
+                                              : FontWeight.w500,
+                                          color:
+                                              _filterClient == null ||
+                                                  _filterClient == 'all'
+                                              ? AquaColors.turquoise
+                                              : AquaColors.textPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                    if (_filterClient == null ||
+                                        _filterClient == 'all')
+                                      const Icon(
+                                        Icons.check_circle_rounded,
+                                        size: 16,
+                                        color: AquaColors.turquoise,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              ...kDefaultClients.map((client) {
+                                final isSel =
+                                    _filterClient == client.companyName;
+                                return PopupMenuItem<String>(
+                                  value: client.companyName,
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 26,
+                                        height: 26,
+                                        decoration: BoxDecoration(
+                                          color: isSel
+                                              ? AquaColors.turquoise.withValues(
+                                                  alpha: 0.16,
+                                                )
+                                              : AquaColors.iceBlue,
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            client.companyName.isNotEmpty
+                                                ? client.companyName[0]
+                                                      .toUpperCase()
+                                                : 'C',
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w800,
+                                              color: isSel
+                                                  ? AquaColors.turquoise
+                                                  : AquaColors.slateBlue,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          client.companyName,
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: 12,
+                                            fontWeight: isSel
+                                                ? FontWeight.w700
+                                                : FontWeight.w500,
+                                            color: isSel
+                                                ? AquaColors.turquoise
+                                                : AquaColors.textPrimary,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Text(
+                                        '\$${client.pricePerBottle.toStringAsFixed(0)}/garr.',
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: AquaColors.textMuted,
+                                        ),
+                                      ),
+                                      if (isSel) ...[
+                                        const SizedBox(width: 6),
+                                        const Icon(
+                                          Icons.check_circle_rounded,
+                                          size: 16,
+                                          color: AquaColors.turquoise,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ],
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      _filterClient == null ||
+                                              _filterClient == 'all'
+                                          ? 'Todos los clientes'
+                                          : _filterClient!,
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w700,
+                                        color:
+                                            _filterClient == null ||
+                                                _filterClient == 'all'
+                                            ? AquaColors.textPrimary
+                                            : AquaColors.turquoise,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    size: 18,
+                                    color: AquaColors.turquoise,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 12),
@@ -554,7 +668,7 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
     if (records.isEmpty) {
       return Center(
         child: Text(
-          'No hay registros para la zona seleccionada',
+          'No hay registros disponibles',
           style: GoogleFonts.montserrat(
             fontSize: 13,
             fontWeight: FontWeight.w500,
@@ -565,6 +679,10 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
     }
 
     final showPrices = widget.showFinancials;
+    final totalSales = records.fold<double>(
+      0.0,
+      (sum, r) => sum + r.totalPrice,
+    );
     final Map<int, TableColumnWidth> colWidths = showPrices
         ? const {
             0: FixedColumnWidth(95), // Fecha
@@ -740,15 +858,20 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                             columnWidths: colWidths,
                             border: TableBorder(
                               horizontalInside: BorderSide(
-                                color: AquaColors.platinum.withValues(alpha: 0.5),
+                                color: AquaColors.platinum.withValues(
+                                  alpha: 0.5,
+                                ),
                                 width: 1,
                               ),
                               verticalInside: BorderSide(
-                                color: AquaColors.platinum.withValues(alpha: 0.5),
+                                color: AquaColors.platinum.withValues(
+                                  alpha: 0.5,
+                                ),
                                 width: 1,
                               ),
                             ),
-                            children: List.generate(records.length, (index) {
+                            children: [
+                              ...List.generate(records.length, (index) {
                               final item = records[index];
                               final isEven = index % 2 == 0;
                               final rowBg = isEven
@@ -953,17 +1076,19 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                                     _buildGridCell(
                                       item.pricePerBottle > 0
                                           ? Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 8,
-                                                vertical: 3,
-                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 3,
+                                                  ),
                                               decoration: BoxDecoration(
                                                 color: AquaColors.statusSupplied
                                                     .withValues(alpha: 0.10),
                                                 borderRadius:
                                                     BorderRadius.circular(8),
                                                 border: Border.all(
-                                                  color: AquaColors.statusSupplied
+                                                  color: AquaColors
+                                                      .statusSupplied
                                                       .withValues(alpha: 0.35),
                                                 ),
                                               ),
@@ -1040,18 +1165,60 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
                                 ],
                               );
                             }),
-                          ),
+                            if (showPrices)
+                              TableRow(
+                                decoration: BoxDecoration(
+                                  color: records.length % 2 == 0
+                                      ? Colors.white.withValues(alpha: 0.9)
+                                      : AquaColors.iceBlue.withValues(alpha: 0.35),
+                                ),
+                                children: [
+                                  // 0: Fecha
+                                  _buildGridCell(const SizedBox.shrink()),
+                                  // 1: Hora
+                                  _buildGridCell(const SizedBox.shrink()),
+                                  // 2: Punto / Zona
+                                  _buildGridCell(const SizedBox.shrink()),
+                                  // 3: Despachador
+                                  _buildGridCell(const SizedBox.shrink()),
+                                  // 4: Cliente
+                                  _buildGridCell(const SizedBox.shrink()),
+                                  // 5: Garrafones
+                                  _buildGridCell(const SizedBox.shrink()),
+                                  // 6: Operación
+                                  _buildGridCell(const SizedBox.shrink()),
+                                  // 7: Recibió
+                                  _buildGridCell(const SizedBox.shrink()),
+                                  // 8: Precio Unit.
+                                  _buildGridCell(const SizedBox.shrink()),
+                                  // 9: Total ($)
+                                  _buildGridCell(
+                                    Text(
+                                      '\$${totalSales.toStringAsFixed(2)}',
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 11,
+                                        color: AquaColors.textPrimary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  // 10: Firma
+                                  _buildGridCell(const SizedBox.shrink()),
+                                ],
+                              ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
         ),
-      ],
-    );
+      ),
+    ],
+  );
   }
 
   Widget _buildGridHeaderCell(String title, IconData icon) {
@@ -1084,14 +1251,12 @@ class _WorkerHistoryTableScreenState extends State<WorkerHistoryTableScreen> {
   Widget _buildGridCell(
     Widget child, {
     Alignment alignment = Alignment.centerLeft,
-    EdgeInsetsGeometry padding =
-        const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+    EdgeInsetsGeometry padding = const EdgeInsets.symmetric(
+      horizontal: 8,
+      vertical: 10,
+    ),
   }) {
-    return Container(
-      padding: padding,
-      alignment: alignment,
-      child: child,
-    );
+    return Container(padding: padding, alignment: alignment, child: child);
   }
 
   Widget _buildBarChartView(List<SupplyRecord> records) {
