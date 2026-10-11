@@ -1,6 +1,17 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/aqua_colors.dart';
+
+/// Recognizer that immediately accepts the gesture on pointer down,
+/// winning the gesture arena instantly over any parent Scrollable.
+class _EagerPanGestureRecognizer extends PanGestureRecognizer {
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    super.addAllowedPointer(event);
+    resolve(GestureDisposition.accepted);
+  }
+}
 
 class SignatureStroke {
   final List<Offset> points;
@@ -17,12 +28,14 @@ class SignatureStroke {
 class SignaturePad extends StatefulWidget {
   final ValueChanged<List<Offset>> onSignatureChanged;
   final VoidCallback? onCleared;
+  final ValueChanged<bool>? onSigningActiveChanged;
   final double height;
 
   const SignaturePad({
     super.key,
     required this.onSignatureChanged,
     this.onCleared,
+    this.onSigningActiveChanged,
     this.height = 200,
   });
 
@@ -53,6 +66,7 @@ class SignaturePadState extends State<SignaturePad> {
     });
     widget.onSignatureChanged([]);
     widget.onCleared?.call();
+    widget.onSigningActiveChanged?.call(false);
   }
 
   void _notifyChange() {
@@ -93,26 +107,47 @@ class SignaturePadState extends State<SignaturePad> {
                   color: Colors.white.withValues(alpha: 0.55),
                 ),
 
-                // Canvas de firma con detector de gestos
-                GestureDetector(
-                  onPanStart: (details) {
-                    setState(() {
-                      _currentStroke = [details.localPosition];
-                    });
-                  },
-                  onPanUpdate: (details) {
-                    setState(() {
-                      _currentStroke.add(details.localPosition);
-                    });
-                  },
-                  onPanEnd: (details) {
-                    setState(() {
-                      if (_currentStroke.isNotEmpty) {
-                        _strokes.add(List.from(_currentStroke));
-                        _currentStroke = [];
-                      }
-                    });
-                    _notifyChange();
+                // Canvas de firma con detector ágil que ancla la firma y no compite con scroll
+                RawGestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  gestures: {
+                    _EagerPanGestureRecognizer:
+                        GestureRecognizerFactoryWithHandlers<_EagerPanGestureRecognizer>(
+                      () => _EagerPanGestureRecognizer(),
+                      (_EagerPanGestureRecognizer instance) {
+                        instance.onStart = (details) {
+                          widget.onSigningActiveChanged?.call(true);
+                          setState(() {
+                            _currentStroke = [details.localPosition];
+                          });
+                        };
+                        instance.onUpdate = (details) {
+                          setState(() {
+                            _currentStroke.add(details.localPosition);
+                          });
+                        };
+                        instance.onEnd = (details) {
+                          widget.onSigningActiveChanged?.call(false);
+                          setState(() {
+                            if (_currentStroke.isNotEmpty) {
+                              _strokes.add(List.from(_currentStroke));
+                              _currentStroke = [];
+                            }
+                          });
+                          _notifyChange();
+                        };
+                        instance.onCancel = () {
+                          widget.onSigningActiveChanged?.call(false);
+                          setState(() {
+                            if (_currentStroke.isNotEmpty) {
+                              _strokes.add(List.from(_currentStroke));
+                              _currentStroke = [];
+                            }
+                          });
+                          _notifyChange();
+                        };
+                      },
+                    ),
                   },
                   child: CustomPaint(
                     painter: _SignaturePainter(

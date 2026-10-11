@@ -3,10 +3,19 @@ import '../widgets/aqua_background.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/zoom_container.dart';
 import 'admin_dashboard_screen.dart';
-import 'supply_points_screen.dart';
+import 'clients_screen.dart';
 import 'worker_history_table_screen.dart';
 
-enum UserRole { admin, worker }
+enum UserRole {
+  admin(0),
+  worker(1);
+
+  final int code;
+  const UserRole(this.code);
+
+  static UserRole fromCode(int code) =>
+      code == 0 ? UserRole.admin : UserRole.worker;
+}
 
 class AppShell extends StatefulWidget {
   final UserRole initialRole;
@@ -46,10 +55,11 @@ class _AppShellState extends State<AppShell> {
             index: _currentIndex,
             children: [
               AdminDashboardScreen(
+                onNavigateToClients: () => _onTabSelected(1),
                 onNavigateToPoints: () => _onTabSelected(1),
                 onNavigateToHistory: () => _onTabSelected(2),
               ),
-              const SupplyPointsScreen(),
+              const ClientsScreen(showBackButton: false),
               const WorkerHistoryTableScreen(),
             ],
           ),

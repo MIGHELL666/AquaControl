@@ -1,4 +1,5 @@
 import 'dart:ui' show Offset;
+import '../services/supabase_service.dart';
 
 enum DispenserStatus { supplied, resupplied, pending }
 
@@ -7,47 +8,81 @@ class DispenserItem {
   final String brand;
   final String model;
   final String serialNumber;
+  final String qrToken;
+  final String clientId;
   final DispenserStatus status;
   final String lastSupplyInfo;
   final int bottleCount;
   final String alertMessage;
+
+  final bool isActive;
+  final DateTime? lastSuppliedDate;
 
   const DispenserItem({
     required this.id,
     required this.brand,
     required this.model,
     required this.serialNumber,
+    this.qrToken = '',
+    this.clientId = '',
     required this.status,
     required this.lastSupplyInfo,
-    this.bottleCount = 2,
+    this.bottleCount = 1,
     this.alertMessage = '',
+    this.isActive = true,
+    this.lastSuppliedDate,
   });
 
-  bool get isSupplied =>
-      status == DispenserStatus.supplied ||
-      status == DispenserStatus.resupplied;
-  bool get isPending => status == DispenserStatus.pending;
-  bool get isResupplied => status == DispenserStatus.resupplied;
+  bool get isSuppliedToday {
+    if (status != DispenserStatus.supplied &&
+        status != DispenserStatus.resupplied) {
+      return false;
+    }
+    if (lastSuppliedDate == null) {
+      // Si la descripción contiene "Hoy", fue hoy
+      return lastSupplyInfo.toLowerCase().contains('hoy');
+    }
+    final now = DateTime.now();
+    return lastSuppliedDate!.year == now.year &&
+        lastSuppliedDate!.month == now.month &&
+        lastSuppliedDate!.day == now.day;
+  }
+
+  bool get isSupplied => isSuppliedToday;
+  bool get isPending => !isSuppliedToday;
+  bool get isResupplied =>
+      status == DispenserStatus.resupplied && isSuppliedToday;
+
+  DispenserStatus get effectiveStatus =>
+      isSuppliedToday ? status : DispenserStatus.pending;
 
   DispenserItem copyWith({
     String? id,
     String? brand,
     String? model,
     String? serialNumber,
+    String? qrToken,
+    String? clientId,
     DispenserStatus? status,
     String? lastSupplyInfo,
     int? bottleCount,
     String? alertMessage,
+    bool? isActive,
+    DateTime? lastSuppliedDate,
   }) {
     return DispenserItem(
       id: id ?? this.id,
       brand: brand ?? this.brand,
       model: model ?? this.model,
       serialNumber: serialNumber ?? this.serialNumber,
+      qrToken: qrToken ?? this.qrToken,
+      clientId: clientId ?? this.clientId,
       status: status ?? this.status,
       lastSupplyInfo: lastSupplyInfo ?? this.lastSupplyInfo,
       bottleCount: bottleCount ?? this.bottleCount,
       alertMessage: alertMessage ?? this.alertMessage,
+      isActive: isActive ?? this.isActive,
+      lastSuppliedDate: lastSuppliedDate ?? this.lastSuppliedDate,
     );
   }
 }
@@ -126,13 +161,31 @@ class SupplyRecord {
 class WorkerSession {
   static String? activeClientName;
   static double activePricePerBottle = 0.0;
+  static WorkerItem? currentWorker;
 
   static bool get hasClient =>
       activeClientName != null && activeClientName!.isNotEmpty;
 
+  static ClientItem? get activeClient {
+    if (!hasClient) return null;
+    final idx = kDefaultClients.indexWhere(
+      (c) =>
+          c.companyName.trim().toLowerCase() ==
+          activeClientName!.trim().toLowerCase(),
+    );
+    if (idx != -1) return kDefaultClients[idx];
+    return null;
+  }
+
+  static bool get isQrScanEnabled {
+    final client = activeClient;
+    return client?.hasQrScanning ?? true;
+  }
+
   static void clear() {
     activeClientName = null;
     activePricePerBottle = 0.0;
+    currentWorker = null;
   }
 
   static void setActiveClient(ClientItem client) {
@@ -142,104 +195,7 @@ class WorkerSession {
 }
 
 /// Historial global de abastecimientos y reabastecimientos
-final List<SupplyRecord> kSupplyRecords = [
-  SupplyRecord(
-    id: 'SR-101',
-    dispenserId: '#023',
-    zoneName: 'Producción',
-    bottles: 2,
-    timestamp: DateTime.now().subtract(const Duration(hours: 1, minutes: 15)),
-    workerName: 'Juan Pérez',
-    isResupply: false,
-    recipientName: 'Ing. Roberto Méndez',
-    clientName: 'Bimbo Planta Norte',
-    pricePerBottle: 38.0,
-  ),
-  SupplyRecord(
-    id: 'SR-102',
-    dispenserId: '#026',
-    zoneName: 'Producción',
-    bottles: 2,
-    timestamp: DateTime.now().subtract(const Duration(hours: 2, minutes: 30)),
-    workerName: 'Juan Pérez',
-    isResupply: true,
-    recipientName: 'Mariana Silva',
-    clientName: 'Bimbo Planta Norte',
-    pricePerBottle: 38.0,
-  ),
-  SupplyRecord(
-    id: 'SR-103',
-    dispenserId: '#001',
-    zoneName: 'Calidad',
-    bottles: 2,
-    timestamp: DateTime.now().subtract(const Duration(hours: 4, minutes: 10)),
-    workerName: 'Carlos López',
-    isResupply: false,
-    recipientName: 'Dr. Alejandro Ruiz',
-    clientName: 'Hospital San José',
-    pricePerBottle: 42.0,
-  ),
-  SupplyRecord(
-    id: 'SR-104',
-    dispenserId: '#005',
-    zoneName: 'Almacén',
-    bottles: 3,
-    timestamp: DateTime.now().subtract(const Duration(days: 1, hours: 2)),
-    workerName: 'Pedro García',
-    isResupply: false,
-    recipientName: 'Laura Torres',
-    clientName: 'Manufacturas Sigma',
-    pricePerBottle: 35.0,
-  ),
-  SupplyRecord(
-    id: 'SR-105',
-    dispenserId: '#007',
-    zoneName: 'Almacén',
-    bottles: 2,
-    timestamp: DateTime.now().subtract(const Duration(days: 1, hours: 5)),
-    workerName: 'Juan Pérez',
-    isResupply: true,
-    recipientName: 'Carlos Mendoza',
-    clientName: 'Manufacturas Sigma',
-    pricePerBottle: 35.0,
-  ),
-  SupplyRecord(
-    id: 'SR-106',
-    dispenserId: '#013',
-    zoneName: 'Taller',
-    bottles: 2,
-    timestamp: DateTime.now().subtract(const Duration(days: 2, hours: 3)),
-    workerName: 'Carlos López',
-    isResupply: false,
-    recipientName: 'Esteban Morales',
-    clientName: 'TechCorp Soluciones',
-    pricePerBottle: 32.0,
-  ),
-  SupplyRecord(
-    id: 'SR-107',
-    dispenserId: '#018',
-    zoneName: 'Oficinas',
-    bottles: 2,
-    timestamp: DateTime.now().subtract(const Duration(days: 3, hours: 1)),
-    workerName: 'Pedro García',
-    isResupply: true,
-    recipientName: 'Sofía Valenzuela',
-    clientName: 'TechCorp Soluciones',
-    pricePerBottle: 32.0,
-  ),
-  SupplyRecord(
-    id: 'SR-108',
-    dispenserId: '#025',
-    zoneName: 'Producción',
-    bottles: 3,
-    timestamp: DateTime.now().subtract(const Duration(days: 4, hours: 6)),
-    workerName: 'Juan Pérez',
-    isResupply: false,
-    recipientName: 'Ing. Roberto Méndez',
-    clientName: 'Logística & Distribución Bajío',
-    pricePerBottle: 30.0,
-  ),
-];
+final List<SupplyRecord> kSupplyRecords = [];
 
 /// Modelo de Empresa Cliente
 class ClientItem {
@@ -264,6 +220,11 @@ class ClientItem {
   final String status;
   final String notes;
   final double pricePerBottle;
+  final int initialBottles;
+  final int racksCount;
+  final int rackCapacity;
+  final bool hasQrScanning;
+  final List<String> zoneNames;
 
   const ClientItem({
     required this.id,
@@ -287,6 +248,11 @@ class ClientItem {
     this.status = 'Activo',
     this.notes = '',
     this.pricePerBottle = 35.0,
+    this.initialBottles = 10,
+    this.racksCount = 1,
+    this.rackCapacity = 8,
+    this.hasQrScanning = true,
+    this.zoneNames = const [],
   });
 
   bool get isActive => status.toLowerCase() == 'activo';
@@ -295,6 +261,8 @@ class ClientItem {
   int get dispenserCount => assignedDispenserIds.isNotEmpty
       ? assignedDispenserIds.length
       : activeDispensers;
+
+  int get totalRackCapacity => racksCount * rackCapacity;
 
   String get fullAddress {
     final parts = <String>[];
@@ -331,6 +299,11 @@ class ClientItem {
     String? status,
     String? notes,
     double? pricePerBottle,
+    int? initialBottles,
+    int? racksCount,
+    int? rackCapacity,
+    bool? hasQrScanning,
+    List<String>? zoneNames,
   }) {
     return ClientItem(
       id: id ?? this.id,
@@ -354,180 +327,17 @@ class ClientItem {
       status: status ?? this.status,
       notes: notes ?? this.notes,
       pricePerBottle: pricePerBottle ?? this.pricePerBottle,
+      initialBottles: initialBottles ?? this.initialBottles,
+      racksCount: racksCount ?? this.racksCount,
+      rackCapacity: rackCapacity ?? this.rackCapacity,
+      hasQrScanning: hasQrScanning ?? this.hasQrScanning,
+      zoneNames: zoneNames ?? this.zoneNames,
     );
   }
 }
 
 /// Catálogo de empresas clientes
-final List<ClientItem> kDefaultClients = [
-  const ClientItem(
-    id: 'CLI-001',
-    companyName: 'Bimbo Planta Norte',
-    razonSocial: 'Grupo Bimbo S.A.B. de C.V.',
-    rfc: 'BIM900101XYZ',
-    contactPerson: 'Lic. Fernando Garza',
-    phone: '55 4123 8900',
-    email: 'compras@bimbo-norte.com',
-    domicilio: 'Planta de Producción Norte, Nave 2',
-    calle: 'Parque Industrial Las Américas',
-    numero: '#140',
-    cp: '01210',
-    colonia: 'Las Américas',
-    ciudad: 'Ciudad de México',
-    pais: 'México',
-    address:
-        'Parque Industrial Las Américas #140, Col. Las Américas, C.P. 01210, Ciudad de México',
-    activeDispensers: 12,
-    assignedDispenserIds: [
-      '#023',
-      '#024',
-      '#025',
-      '#026',
-      '#027',
-      '#028',
-      '#029',
-      '#030',
-      '#031',
-      '#032',
-      '#033',
-      '#034',
-    ],
-    deliveryFrequency: 'Diario',
-    status: 'Activo',
-    notes: 'Requiere entrega a las 8:00 AM en puertas 2 y 4.',
-    pricePerBottle: 38.0,
-  ),
-  const ClientItem(
-    id: 'CLI-002',
-    companyName: 'Manufacturas Sigma',
-    razonSocial: 'Sigma Alimentos Manufactura S.A. de C.V.',
-    rfc: 'SMA850315ABC',
-    contactPerson: 'Ing. Patricia Ortega',
-    phone: '55 8970 3341',
-    email: 'almacen@sigma-ind.mx',
-    domicilio: 'Nave Industrial C, Caseta 3',
-    calle: 'Av. Las Industrias',
-    numero: '#520',
-    cp: '66220',
-    colonia: 'Zona Industrial',
-    ciudad: 'Monterrey, N.L.',
-    pais: 'México',
-    address:
-        'Av. Las Industrias #520, Nave C, Col. Zona Industrial, C.P. 66220, Monterrey, N.L.',
-    activeDispensers: 8,
-    assignedDispenserIds: [
-      '#035',
-      '#036',
-      '#037',
-      '#018',
-      '#019',
-      '#020',
-      '#021',
-      '#022',
-    ],
-    deliveryFrequency: 'Cada 2 días',
-    status: 'Activo',
-    notes: 'Revisar filtros de despachador #014 periódicamente.',
-    pricePerBottle: 35.0,
-  ),
-  const ClientItem(
-    id: 'CLI-003',
-    companyName: 'Hospital San José',
-    razonSocial: 'Hospital San José TecSalud S.A. de C.V.',
-    rfc: 'HSJ921104K98',
-    contactPerson: 'Dr. Alejandro Ruiz',
-    phone: '55 2290 1156',
-    email: 'suministros@hospitalsanjose.org',
-    domicilio: 'Torre Médica de Especialidades',
-    calle: 'Calzada Médica',
-    numero: '#890',
-    cp: '44100',
-    colonia: 'Sector Salud',
-    ciudad: 'Guadalajara, Jal.',
-    pais: 'México',
-    address:
-        'Calzada Médica #890, Col. Sector Salud, C.P. 44100, Guadalajara, Jal.',
-    activeDispensers: 15,
-    assignedDispenserIds: [
-      '#005',
-      '#006',
-      '#007',
-      '#008',
-      '#009',
-      '#010',
-      '#011',
-      '#012',
-      '#046',
-      '#047',
-      '#038',
-      '#039',
-      '#040',
-      '#041',
-      '#048',
-    ],
-    deliveryFrequency: 'Diario',
-    status: 'Activo',
-    notes: 'Áreas de terapia intensiva y urgencias prioritarias.',
-    pricePerBottle: 42.0,
-  ),
-  const ClientItem(
-    id: 'CLI-004',
-    companyName: 'TechCorp Soluciones',
-    razonSocial: 'TechCorp Soluciones Digitales S. de R.L. de C.V.',
-    rfc: 'TCS1406209J1',
-    contactPerson: 'Ing. David Salinas',
-    phone: '55 7712 4433',
-    email: 'contacto@techcorp.com',
-    domicilio: 'Torre Corporativa Piso 6',
-    calle: 'Av. Insurgentes Sur',
-    numero: '#1602',
-    cp: '03900',
-    colonia: 'Crédito Constructor',
-    ciudad: 'Ciudad de México',
-    pais: 'México',
-    address:
-        'Av. Insurgentes Sur #1602 Piso 6, Col. Crédito Constructor, C.P. 03900, Ciudad de México',
-    activeDispensers: 6,
-    assignedDispenserIds: ['#001', '#002', '#003', '#004', '#049', '#050'],
-    deliveryFrequency: 'Semanal',
-    status: 'Activo',
-    notes: 'Acceso por recepción con gafete de visitante.',
-    pricePerBottle: 32.0,
-  ),
-  const ClientItem(
-    id: 'CLI-005',
-    companyName: 'Logística & Distribución Bajío',
-    razonSocial: 'Distribución y Carga del Bajío S.A. de C.V.',
-    rfc: 'DCB170810772',
-    contactPerson: 'Martín Escobedo',
-    phone: '55 6601 9922',
-    email: 'm.escobedo@bajiodist.com',
-    domicilio: 'Centro de Distribución Bajío, Andén 5',
-    calle: 'Carretera Federal 45',
-    numero: 'Km 24',
-    cp: '37290',
-    colonia: 'Parque Logístico Bajío',
-    ciudad: 'León, Gto.',
-    pais: 'México',
-    address:
-        'Carretera Federal 45 Km 24, Col. Parque Logístico Bajío, C.P. 37290, León, Gto.',
-    activeDispensers: 9,
-    assignedDispenserIds: [
-      '#042',
-      '#043',
-      '#044',
-      '#013',
-      '#014',
-      '#015',
-      '#016',
-      '#017',
-      '#045',
-    ],
-    deliveryFrequency: 'Cada 2 días',
-    status: 'Activo',
-    pricePerBottle: 30.0,
-  ),
-];
+final List<ClientItem> kDefaultClients = [];
 
 void addClient(ClientItem client) {
   kDefaultClients.insert(0, client);
@@ -586,11 +396,61 @@ List<DispenserItem> getDispensersForClient(ClientItem client) {
   return list;
 }
 
+/// Obtiene la lista de despachadores con su zona para el cliente seleccionado
+List<ZoneDispenserEntry> getDispensersWithZoneForClient(String? clientName) {
+  if (clientName == null || clientName.trim().isEmpty) {
+    return getAllDispensersWithZone();
+  }
+  final cleanName = clientName.trim().toLowerCase();
+  final client = kDefaultClients.firstWhere(
+    (c) => c.companyName.trim().toLowerCase() == cleanName,
+    orElse: () => const ClientItem(
+      id: '',
+      companyName: '',
+      contactPerson: '',
+      phone: '',
+      email: '',
+    ),
+  );
+  if (client.id.isEmpty) {
+    return getAllDispensersWithZone();
+  }
+
+  final List<ZoneDispenserEntry> list = [];
+  for (final zone in kDefaultZones) {
+    for (final dispenser in zone.dispensers) {
+      final isAssigned =
+          client.assignedDispenserIds.any(
+            (id) => id.trim() == dispenser.id.trim(),
+          ) ||
+          dispenser.clientId == client.id;
+      final isAllowedZone =
+          !client.hasQrScanning ||
+          client.zoneNames.isEmpty ||
+          client.zoneNames.any(
+            (name) =>
+                name.trim().toLowerCase() == zone.name.trim().toLowerCase(),
+          );
+      if (isAssigned && isAllowedZone) {
+        list.add(ZoneDispenserEntry(zoneName: zone.name, dispenser: dispenser));
+      }
+    }
+  }
+  return list;
+}
+
 /// Busca a qué cliente pertenece un despachador determinado
 ClientItem? getClientForDispenser(String dispenserId) {
   final cleanId = dispenserId.trim();
   for (final client in kDefaultClients) {
-    if (client.assignedDispenserIds.any((id) => id.trim() == cleanId)) {
+    if (client.assignedDispenserIds.any((id) => id.trim() == cleanId) ||
+        kDefaultZones.any(
+          (zone) => zone.dispensers.any(
+            (dispenser) =>
+                dispenser.id.trim() == cleanId &&
+                dispenser.clientId == client.id,
+          ),
+        )) {
       return client;
     }
   }
@@ -598,6 +458,7 @@ ClientItem? getClientForDispenser(String dispenserId) {
 }
 
 /// Reasigna despachadores a un cliente, asegurando que no queden duplicados en otros clientes
+/// y que los despachadores asignados al cliente inicien en estado 'pending' (Pendientes de abastecer)
 void assignDispensersToClient(String clientId, List<String> dispenserIds) {
   for (int i = 0; i < kDefaultClients.length; i++) {
     final client = kDefaultClients[i];
@@ -614,6 +475,34 @@ void assignDispensersToClient(String clientId, List<String> dispenserIds) {
         kDefaultClients[i] = client.copyWith(
           assignedDispenserIds: updatedIds,
           activeDispensers: updatedIds.length,
+        );
+      }
+    }
+  }
+
+  for (final zone in kDefaultZones) {
+    for (var i = 0; i < zone.dispensers.length; i++) {
+      final dispenser = zone.dispensers[i];
+      final owningClient = kDefaultClients.cast<ClientItem?>().firstWhere(
+        (client) => client!.assignedDispenserIds.any(
+          (id) => id.trim() == dispenser.id.trim(),
+        ),
+        orElse: () => null,
+      );
+      zone.dispensers[i] = dispenser.copyWith(clientId: owningClient?.id ?? '');
+    }
+  }
+
+  // Al asignar despachadores al cliente, deben figurar como pendientes de abastecer
+  for (final id in dispenserIds) {
+    final cleanId = id.trim();
+    for (final zone in kDefaultZones) {
+      final idx = zone.dispensers.indexWhere((d) => d.id.trim() == cleanId);
+      if (idx != -1) {
+        final current = zone.dispensers[idx];
+        zone.dispensers[idx] = current.copyWith(
+          status: DispenserStatus.pending,
+          lastSupplyInfo: 'Pendiente de abastecer',
         );
       }
     }
@@ -670,6 +559,7 @@ class WorkerItem {
   final String shift;
   final String status;
   final List<String> assignedClients;
+  final String password;
 
   const WorkerItem({
     required this.id,
@@ -681,6 +571,7 @@ class WorkerItem {
     this.shift = 'Matutino',
     this.status = 'Activo',
     this.assignedClients = const [],
+    this.password = 'AquaPass2026',
   });
 
   WorkerItem copyWith({
@@ -693,6 +584,7 @@ class WorkerItem {
     String? shift,
     String? status,
     List<String>? assignedClients,
+    String? password,
   }) {
     return WorkerItem(
       id: id ?? this.id,
@@ -704,96 +596,46 @@ class WorkerItem {
       shift: shift ?? this.shift,
       status: status ?? this.status,
       assignedClients: assignedClients ?? this.assignedClients,
+      password: password ?? this.password,
     );
   }
 }
 
 /// Catálogo de trabajadores
-final List<WorkerItem> kDefaultWorkers = [
-  const WorkerItem(
-    id: 'WRK-001',
-    name: 'Juan Pérez',
-    employeeNumber: 'EMP-1042',
-    phone: '55 1234 5678',
-    email: 'juan.perez@aquacontrol.com',
-    assignedZone: 'Producción',
-    shift: 'Matutino',
-    assignedClients: [
-      'Bimbo Planta Norte',
-      'Manufacturas Sigma',
-      'Hospital San José',
-      'TechCorp Soluciones',
-      'Logística & Distribución Bajío',
-    ],
-  ),
-  const WorkerItem(
-    id: 'WRK-002',
-    name: 'Carlos López',
-    employeeNumber: 'EMP-1045',
-    phone: '55 2345 6789',
-    email: 'carlos.lopez@aquacontrol.com',
-    assignedZone: 'Almacén',
-    shift: 'Vespertino',
-    assignedClients: [
-      'Bimbo Planta Norte',
-      'Manufacturas Sigma',
-      'Hospital San José',
-      'TechCorp Soluciones',
-      'Logística & Distribución Bajío',
-    ],
-  ),
-  const WorkerItem(
-    id: 'WRK-003',
-    name: 'Pedro García',
-    employeeNumber: 'EMP-1049',
-    phone: '55 3456 7890',
-    email: 'pedro.garcia@aquacontrol.com',
-    assignedZone: 'Calidad',
-    shift: 'Matutino',
-    assignedClients: [
-      'Bimbo Planta Norte',
-      'Manufacturas Sigma',
-      'Hospital San José',
-      'TechCorp Soluciones',
-      'Logística & Distribución Bajío',
-    ],
-  ),
-  const WorkerItem(
-    id: 'WRK-004',
-    name: 'Miguel Hernández',
-    employeeNumber: 'EMP-1053',
-    phone: '55 4567 8901',
-    email: 'miguel.h@aquacontrol.com',
-    assignedZone: 'Oficinas',
-    shift: 'Mixto',
-    assignedClients: [
-      'Bimbo Planta Norte',
-      'Manufacturas Sigma',
-      'Hospital San José',
-      'TechCorp Soluciones',
-      'Logística & Distribución Bajío',
-    ],
-  ),
-  const WorkerItem(
-    id: 'WRK-005',
-    name: 'Lucía Mendoza',
-    employeeNumber: 'EMP-1058',
-    phone: '55 5678 9012',
-    email: 'lucia.m@aquacontrol.com',
-    assignedZone: 'Taller',
-    shift: 'Matutino',
-    assignedClients: [
-      'Bimbo Planta Norte',
-      'Manufacturas Sigma',
-      'Hospital San José',
-      'TechCorp Soluciones',
-      'Logística & Distribución Bajío',
-    ],
-  ),
-];
+final List<WorkerItem> kDefaultWorkers = [];
 
 void addWorker(WorkerItem worker) {
   kDefaultWorkers.insert(0, worker);
+}
+
+bool updateWorker(String workerId, WorkerItem updatedWorker) {
+  final idx = kDefaultWorkers.indexWhere(
+    (w) =>
+        w.id.trim() == workerId.trim() ||
+        w.employeeNumber.trim() == workerId.trim(),
+  );
+  if (idx != -1) {
+    kDefaultWorkers[idx] = updatedWorker;
+    return true;
+  }
+  return false;
+}
+
+bool toggleWorkerStatus(String workerId) {
+  final idx = kDefaultWorkers.indexWhere(
+    (w) =>
+        w.id.trim() == workerId.trim() ||
+        w.employeeNumber.trim() == workerId.trim(),
+  );
+  if (idx != -1) {
+    final current = kDefaultWorkers[idx];
+    final newStatus = current.status.toLowerCase() == 'activo'
+        ? 'Inactivo'
+        : 'Activo';
+    kDefaultWorkers[idx] = current.copyWith(status: newStatus);
+    return true;
+  }
+  return false;
 }
 
 // ─── CRUD de Zonas ─────────────────────────────────────────────
@@ -822,10 +664,11 @@ bool deleteZone(String zoneName) {
 
 // ─── CRUD de Despachadores ─────────────────────────────────────
 bool deleteDispenser(String zoneName, String dispenserId) {
-  final zone = kDefaultZones.firstWhere(
+  final zoneIdx = kDefaultZones.indexWhere(
     (z) => z.name.toLowerCase() == zoneName.toLowerCase(),
-    orElse: () => kDefaultZones.first,
   );
+  if (zoneIdx == -1) return false;
+  final zone = kDefaultZones[zoneIdx];
   final initialLength = zone.dispensers.length;
   zone.dispensers.removeWhere((d) => d.id.trim() == dispenserId.trim());
   return zone.dispensers.length < initialLength;
@@ -837,10 +680,11 @@ bool updateDispenser({
   required DispenserItem updatedItem,
   required String targetZoneName,
 }) {
-  final currentZone = kDefaultZones.firstWhere(
+  final currentIdx = kDefaultZones.indexWhere(
     (z) => z.name.toLowerCase() == currentZoneName.toLowerCase(),
-    orElse: () => kDefaultZones.first,
   );
+  if (currentIdx == -1) return false;
+  final currentZone = kDefaultZones[currentIdx];
 
   if (currentZoneName.toLowerCase() == targetZoneName.toLowerCase()) {
     final idx = currentZone.dispensers.indexWhere(
@@ -855,24 +699,49 @@ bool updateDispenser({
     currentZone.dispensers.removeWhere(
       (d) => d.id.trim() == currentDispenserId.trim(),
     );
-    final targetZone = kDefaultZones.firstWhere(
+    final targetIdx = kDefaultZones.indexWhere(
       (z) => z.name.toLowerCase() == targetZoneName.toLowerCase(),
-      orElse: () => kDefaultZones.first,
     );
-    targetZone.dispensers.insert(0, updatedItem);
-    return true;
+    if (targetIdx != -1) {
+      kDefaultZones[targetIdx].dispensers.insert(0, updatedItem);
+      return true;
+    } else {
+      kDefaultZones.add(
+        ZoneItem(name: targetZoneName, subtitle: '', dispensers: [updatedItem]),
+      );
+      return true;
+    }
   }
 }
 
 void addDispenser(String zoneName, DispenserItem newItem) {
-  final targetZone = kDefaultZones.firstWhere(
+  final idx = kDefaultZones.indexWhere(
     (z) => z.name.toLowerCase() == zoneName.toLowerCase(),
-    orElse: () => kDefaultZones.first,
   );
-  targetZone.dispensers.insert(0, newItem);
+  if (idx != -1) {
+    kDefaultZones[idx].dispensers.insert(0, newItem);
+  } else {
+    kDefaultZones.add(
+      ZoneItem(name: zoneName, subtitle: '', dispensers: [newItem]),
+    );
+  }
 }
 
-bool markDispenserSupplied(
+bool toggleDispenserStatus(String dispenserId) {
+  for (final zone in kDefaultZones) {
+    final idx = zone.dispensers.indexWhere(
+      (d) => d.id.trim() == dispenserId.trim(),
+    );
+    if (idx != -1) {
+      final old = zone.dispensers[idx];
+      zone.dispensers[idx] = old.copyWith(isActive: !old.isActive);
+      return true;
+    }
+  }
+  return false;
+}
+
+Future<bool> markDispenserSupplied(
   String dispenserId,
   int bottleCount, {
   String recipientName = 'Responsable de Zona',
@@ -880,18 +749,34 @@ bool markDispenserSupplied(
   String workerName = 'Juan Pérez',
   String clientName = '',
   double pricePerBottle = 0.0,
-}) {
+}) async {
   for (final zone in kDefaultZones) {
     final idx = zone.dispensers.indexWhere(
       (d) => d.id.trim() == dispenserId.trim(),
     );
     if (idx != -1) {
       final old = zone.dispensers[idx];
+      final now = DateTime.now();
+      final supplyInfo =
+          'Hoy ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} • $bottleCount garrafones';
+      try {
+        await SupabaseService.client
+            .from('dispensers')
+            .update({
+              'status': 'supplied',
+              'bottle_count': bottleCount,
+              'last_supply_info': supplyInfo,
+            })
+            .eq('id', dispenserId.trim());
+      } catch (_) {
+        return false;
+      }
+
       zone.dispensers[idx] = old.copyWith(
         status: DispenserStatus.supplied,
         bottleCount: bottleCount,
-        lastSupplyInfo:
-            'Hoy ${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')} • $bottleCount garrafones',
+        lastSuppliedDate: now,
+        lastSupplyInfo: supplyInfo,
       );
       kSupplyRecords.insert(
         0,
@@ -900,7 +785,7 @@ bool markDispenserSupplied(
           dispenserId: dispenserId,
           zoneName: zone.name,
           bottles: bottleCount,
-          timestamp: DateTime.now(),
+          timestamp: now,
           workerName: workerName,
           isResupply: false,
           recipientName: recipientName,
@@ -916,7 +801,7 @@ bool markDispenserSupplied(
 }
 
 /// Reabastece un despachador sumando o actualizando garrafones en las rondas de trabajo
-bool resupplyDispenser(
+Future<bool> resupplyDispenser(
   String dispenserId,
   int addedBottles, {
   String recipientName = 'Responsable de Zona',
@@ -924,7 +809,7 @@ bool resupplyDispenser(
   String workerName = 'Juan Pérez',
   String clientName = '',
   double pricePerBottle = 0.0,
-}) {
+}) async {
   for (final zone in kDefaultZones) {
     final idx = zone.dispensers.indexWhere(
       (d) => d.id.trim() == dispenserId.trim(),
@@ -932,11 +817,27 @@ bool resupplyDispenser(
     if (idx != -1) {
       final old = zone.dispensers[idx];
       final newTotal = old.bottleCount + addedBottles;
+      final now = DateTime.now();
+      final supplyInfo =
+          'Reabastecido hoy ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} (+$addedBottles)';
+      try {
+        await SupabaseService.client
+            .from('dispensers')
+            .update({
+              'status': 'resupplied',
+              'bottle_count': newTotal,
+              'last_supply_info': supplyInfo,
+            })
+            .eq('id', dispenserId.trim());
+      } catch (_) {
+        return false;
+      }
+
       zone.dispensers[idx] = old.copyWith(
         status: DispenserStatus.resupplied,
         bottleCount: newTotal,
-        lastSupplyInfo:
-            'Reabastecido hoy ${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')} (+$addedBottles)',
+        lastSuppliedDate: now,
+        lastSupplyInfo: supplyInfo,
       );
       kSupplyRecords.insert(
         0,
@@ -945,7 +846,7 @@ bool resupplyDispenser(
           dispenserId: dispenserId,
           zoneName: zone.name,
           bottles: addedBottles,
-          timestamp: DateTime.now(),
+          timestamp: now,
           workerName: workerName,
           isResupply: true,
           recipientName: recipientName,
@@ -954,6 +855,7 @@ bool resupplyDispenser(
           pricePerBottle: pricePerBottle,
         ),
       );
+
       return true;
     }
   }
@@ -994,491 +896,4 @@ List<ZoneDispenserEntry> getAllDispensersWithZone() {
 }
 
 /// Datos iniciales con las 6 zonas principales del sistema.
-final List<ZoneItem> kDefaultZones = [
-  ZoneItem(
-    name: 'Producción',
-    subtitle: 'Nave principal y líneas de ensamble',
-    dispensers: [
-      DispenserItem(
-        id: '#023',
-        brand: 'EcoWater',
-        model: 'E-200',
-        serialNumber: 'EW-88219',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 10:30 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#024',
-        brand: 'AquaPro',
-        model: 'X-100',
-        serialNumber: 'AP-55410',
-        status: DispenserStatus.pending,
-        lastSupplyInfo: 'Ayer 14:00 PM',
-        bottleCount: 0,
-      ),
-      DispenserItem(
-        id: '#025',
-        brand: 'Oasis',
-        model: 'Titan 50',
-        serialNumber: 'OS-11029',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 08:15 AM • 3 garrafones',
-        bottleCount: 3,
-      ),
-      DispenserItem(
-        id: '#026',
-        brand: 'EcoWater',
-        model: 'E-200',
-        serialNumber: 'EW-99312',
-        status: DispenserStatus.resupplied,
-        lastSupplyInfo: 'Reabastecido hoy 11:45 AM (+2)',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#027',
-        brand: 'PureWater',
-        model: 'PW-Ultra',
-        serialNumber: 'PW-33018',
-        status: DispenserStatus.pending,
-        lastSupplyInfo: 'Hace 2 días',
-        bottleCount: 0,
-      ),
-      DispenserItem(
-        id: '#028',
-        brand: 'AquaPro',
-        model: 'X-200',
-        serialNumber: 'AP-77812',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 09:20 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#029',
-        brand: 'EcoWater',
-        model: 'E-150',
-        serialNumber: 'EW-44510',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 12:10 PM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#030',
-        brand: 'Oasis',
-        model: 'Titan 50',
-        serialNumber: 'OS-99104',
-        status: DispenserStatus.pending,
-        lastSupplyInfo: 'Ayer 18:30 PM',
-        bottleCount: 0,
-      ),
-      DispenserItem(
-        id: '#031',
-        brand: 'EcoWater',
-        model: 'E-200',
-        serialNumber: 'EW-12984',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 07:50 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#032',
-        brand: 'AquaPro',
-        model: 'X-100',
-        serialNumber: 'AP-66723',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 10:05 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#033',
-        brand: 'PureWater',
-        model: 'PW-Touch',
-        serialNumber: 'PW-88123',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 11:15 AM • 1 garrafón',
-        bottleCount: 1,
-      ),
-      DispenserItem(
-        id: '#034',
-        brand: 'EcoWater',
-        model: 'E-300',
-        serialNumber: 'EW-66512',
-        status: DispenserStatus.pending,
-        lastSupplyInfo: 'Ayer 15:40 PM',
-        bottleCount: 0,
-      ),
-      DispenserItem(
-        id: '#035',
-        brand: 'Oasis',
-        model: 'Slim 20',
-        serialNumber: 'OS-44312',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 08:40 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#036',
-        brand: 'AquaPro',
-        model: 'X-100',
-        serialNumber: 'AP-22194',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 09:55 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#037',
-        brand: 'EcoWater',
-        model: 'E-200',
-        serialNumber: 'EW-77123',
-        status: DispenserStatus.resupplied,
-        lastSupplyInfo: 'Reabastecido hoy 12:45 PM (+2)',
-        bottleCount: 2,
-      ),
-    ],
-  ),
-  ZoneItem(
-    name: 'Almacén',
-    subtitle: 'Área de logística y carga',
-    dispensers: [
-      DispenserItem(
-        id: '#018',
-        brand: 'EcoWater',
-        model: 'E-100',
-        serialNumber: 'EW-33412',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 09:10 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#019',
-        brand: 'PureWater',
-        model: 'PW-Pro',
-        serialNumber: 'PW-44819',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 10:40 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#020',
-        brand: 'AquaPro',
-        model: 'X-200',
-        serialNumber: 'AP-99014',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 11:20 AM • 1 garrafón',
-        bottleCount: 1,
-      ),
-      DispenserItem(
-        id: '#021',
-        brand: 'Oasis',
-        model: 'Titan 50',
-        serialNumber: 'OS-22831',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 08:30 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#022',
-        brand: 'EcoWater',
-        model: 'E-200',
-        serialNumber: 'EW-55102',
-        status: DispenserStatus.resupplied,
-        lastSupplyInfo: 'Reabastecido hoy 12:00 PM (+2)',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#042',
-        brand: 'AquaPro',
-        model: 'X-100',
-        serialNumber: 'AP-11209',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 07:30 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#043',
-        brand: 'PureWater',
-        model: 'PW-Touch',
-        serialNumber: 'PW-66718',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 11:00 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#044',
-        brand: 'Oasis',
-        model: 'Slim 20',
-        serialNumber: 'OS-77123',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 09:45 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-    ],
-  ),
-  ZoneItem(
-    name: 'Taller',
-    subtitle: 'Área de mantenimiento mecánico',
-    dispensers: [
-      DispenserItem(
-        id: '#013',
-        brand: 'AquaPro',
-        model: 'X-200',
-        serialNumber: 'AP-33219',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 08:00 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#014',
-        brand: 'EcoWater',
-        model: 'E-200',
-        serialNumber: 'EW-44109',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 10:15 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#015',
-        brand: 'PureWater',
-        model: 'PW-Pro',
-        serialNumber: 'PW-99014',
-        status: DispenserStatus.pending,
-        lastSupplyInfo: 'Ayer 16:00 PM',
-        bottleCount: 0,
-      ),
-      DispenserItem(
-        id: '#016',
-        brand: 'Oasis',
-        model: 'Titan 50',
-        serialNumber: 'OS-33102',
-        status: DispenserStatus.pending,
-        lastSupplyInfo: 'Ayer 17:30 PM',
-        bottleCount: 0,
-      ),
-      DispenserItem(
-        id: '#017',
-        brand: 'AquaPro',
-        model: 'X-100',
-        serialNumber: 'AP-88410',
-        status: DispenserStatus.pending,
-        lastSupplyInfo: 'Hace 2 días',
-        bottleCount: 0,
-      ),
-      DispenserItem(
-        id: '#045',
-        brand: 'EcoWater',
-        model: 'E-150',
-        serialNumber: 'EW-22194',
-        status: DispenserStatus.pending,
-        lastSupplyInfo: 'Ayer 12:00 PM',
-        bottleCount: 0,
-      ),
-    ],
-  ),
-  ZoneItem(
-    name: 'Oficinas',
-    subtitle: 'Edificio administrativo y ventas',
-    dispensers: [
-      DispenserItem(
-        id: '#005',
-        brand: 'Oasis',
-        model: 'Slim 20',
-        serialNumber: 'OS-55410',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 09:00 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#006',
-        brand: 'PureWater',
-        model: 'PW-Touch',
-        serialNumber: 'PW-11928',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 12:00 PM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#007',
-        brand: 'EcoWater',
-        model: 'E-300',
-        serialNumber: 'EW-77412',
-        status: DispenserStatus.resupplied,
-        lastSupplyInfo: 'Reabastecido hoy 08:30 AM (+2)',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#008',
-        brand: 'AquaPro',
-        model: 'X-100',
-        serialNumber: 'AP-66319',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 10:45 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#009',
-        brand: 'Oasis',
-        model: 'Slim 20',
-        serialNumber: 'OS-88219',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 11:30 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#010',
-        brand: 'PureWater',
-        model: 'PW-Touch',
-        serialNumber: 'PW-44109',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 07:45 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#011',
-        brand: 'EcoWater',
-        model: 'E-200',
-        serialNumber: 'EW-99014',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 09:30 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#012',
-        brand: 'AquaPro',
-        model: 'X-200',
-        serialNumber: 'AP-55102',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 10:15 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#046',
-        brand: 'Oasis',
-        model: 'Slim 20',
-        serialNumber: 'OS-11209',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 12:15 PM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#047',
-        brand: 'EcoWater',
-        model: 'E-100',
-        serialNumber: 'EW-66718',
-        status: DispenserStatus.pending,
-        lastSupplyInfo: 'Ayer 15:00 PM',
-        bottleCount: 0,
-      ),
-    ],
-  ),
-  ZoneItem(
-    name: 'Mantenimiento',
-    subtitle: 'Almacén de refacciones y cuartos técnicos',
-    dispensers: [
-      DispenserItem(
-        id: '#038',
-        brand: 'AquaPro',
-        model: 'Industrial X',
-        serialNumber: 'AP-99412',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 08:15 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#039',
-        brand: 'EcoWater',
-        model: 'E-200',
-        serialNumber: 'EW-33819',
-        status: DispenserStatus.pending,
-        lastSupplyInfo: 'Ayer 13:30 PM',
-        bottleCount: 0,
-      ),
-      DispenserItem(
-        id: '#040',
-        brand: 'PureWater',
-        model: 'PW-Pro',
-        serialNumber: 'PW-55014',
-        status: DispenserStatus.pending,
-        lastSupplyInfo: 'Ayer 16:45 PM',
-        bottleCount: 0,
-      ),
-      DispenserItem(
-        id: '#041',
-        brand: 'Oasis',
-        model: 'Titan 50',
-        serialNumber: 'OS-88102',
-        status: DispenserStatus.pending,
-        lastSupplyInfo: 'Hace 2 días',
-        bottleCount: 0,
-      ),
-      DispenserItem(
-        id: '#048',
-        brand: 'AquaPro',
-        model: 'X-100',
-        serialNumber: 'AP-44194',
-        status: DispenserStatus.pending,
-        lastSupplyInfo: 'Ayer 17:00 PM',
-        bottleCount: 0,
-      ),
-    ],
-  ),
-  ZoneItem(
-    name: 'Calidad',
-    subtitle: 'Laboratorio y control de procesos',
-    dispensers: [
-      DispenserItem(
-        id: '#001',
-        brand: 'EcoWater',
-        model: 'E-200',
-        serialNumber: 'EW-11209',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 07:45 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#002',
-        brand: 'AquaPro',
-        model: 'X-100',
-        serialNumber: 'AP-66718',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 10:15 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#003',
-        brand: 'PureWater',
-        model: 'PW-Ultra',
-        serialNumber: 'PW-77123',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 11:30 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#004',
-        brand: 'Oasis',
-        model: 'Slim 20',
-        serialNumber: 'OS-99014',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 08:50 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#049',
-        brand: 'EcoWater',
-        model: 'E-300',
-        serialNumber: 'EW-55410',
-        status: DispenserStatus.resupplied,
-        lastSupplyInfo: 'Reabastecido hoy 12:20 PM (+2)',
-        bottleCount: 2,
-      ),
-      DispenserItem(
-        id: '#050',
-        brand: 'AquaPro',
-        model: 'X-200',
-        serialNumber: 'AP-33018',
-        status: DispenserStatus.supplied,
-        lastSupplyInfo: 'Hoy 09:15 AM • 2 garrafones',
-        bottleCount: 2,
-      ),
-    ],
-  ),
-];
+final List<ZoneItem> kDefaultZones = [];

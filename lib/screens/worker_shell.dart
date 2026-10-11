@@ -29,6 +29,9 @@ class _WorkerShellState extends State<WorkerShell> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialTabIndex;
+    if (!WorkerSession.isQrScanEnabled && _currentIndex == 0) {
+      _currentIndex = 1;
+    }
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _ensureClientIfNeeded(),
     );
@@ -39,14 +42,20 @@ class _WorkerShellState extends State<WorkerShell> {
       final client = await Navigator.of(context).push<ClientItem>(
         MaterialPageRoute(
           fullscreenDialog: true,
-          builder: (ctx) => const ClientSelectionScreen(
+          builder: (ctx) => ClientSelectionScreen(
             title: 'Selecciona la empresa a abastecer',
             isMandatory: true,
+            allowedClientNames: WorkerSession.currentWorker?.assignedClients,
           ),
         ),
       );
       if (client != null && mounted) {
-        setState(() => WorkerSession.setActiveClient(client));
+        setState(() {
+          WorkerSession.setActiveClient(client);
+          if (!client.hasQrScanning && _currentIndex == 0) {
+            _currentIndex = 1;
+          }
+        });
       }
     }
   }
@@ -135,12 +144,18 @@ class _WorkerShellState extends State<WorkerShell> {
           selectedClient: current,
           allowOmit: false,
           isMandatory: false,
+          allowedClientNames: WorkerSession.currentWorker?.assignedClients,
         ),
       ),
     );
 
     if (client != null && mounted) {
-      setState(() => WorkerSession.setActiveClient(client));
+      setState(() {
+        WorkerSession.setActiveClient(client);
+        if (!client.hasQrScanning && _currentIndex == 0) {
+          _currentIndex = 1;
+        }
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AquaColors.turquoise,
@@ -243,7 +258,9 @@ class _WorkerShellState extends State<WorkerShell> {
                                       children: [
                                         Text(
                                           hasActiveClient
-                                              ? 'Abasteciendo a'
+                                              ? (WorkerSession.currentWorker != null
+                                                  ? 'Trabajador: ${WorkerSession.currentWorker!.name}'
+                                                  : 'Abasteciendo a')
                                               : 'Sin empresa seleccionada',
                                           style: GoogleFonts.montserrat(
                                             fontSize: 10,
@@ -251,6 +268,8 @@ class _WorkerShellState extends State<WorkerShell> {
                                             color: AquaColors.textSecondary,
                                             letterSpacing: 0.2,
                                           ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                         const SizedBox(height: 1),
                                         if (hasActiveClient)
@@ -268,6 +287,24 @@ class _WorkerShellState extends State<WorkerShell> {
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
                                               ),
+                                              if (!WorkerSession.isQrScanEnabled) ...[
+                                                const SizedBox(width: 6),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                                  decoration: BoxDecoration(
+                                                    color: AquaColors.slateBlue.withValues(alpha: 0.15),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                  ),
+                                                  child: Text(
+                                                    'Sin QR',
+                                                    style: GoogleFonts.montserrat(
+                                                      fontSize: 9,
+                                                      fontWeight: FontWeight.w700,
+                                                      color: AquaColors.slateBlue,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ],
                                           )
                                         else
@@ -330,9 +367,15 @@ class _WorkerShellState extends State<WorkerShell> {
                   child: IndexedStack(
                     index: _currentIndex,
                     children: [
-                      const QrScannerScreen(),
+                      WorkerSession.isQrScanEnabled
+                          ? const QrScannerScreen()
+                          : _buildQrDisabledView(),
                       WorkerDispensersScreen(
-                        onNavigateToScan: () => _onTabSelected(0),
+                        onNavigateToScan: () {
+                          if (WorkerSession.isQrScanEnabled) {
+                            _onTabSelected(0);
+                          }
+                        },
                       ),
                       const WorkerHistoryTableScreen(showFinancials: false),
                     ],
@@ -369,8 +412,10 @@ class _WorkerShellState extends State<WorkerShell> {
                   children: [
                     _buildNavItem(
                       0,
-                      Icons.qr_code_scanner_rounded,
-                      'Escanear QR',
+                      WorkerSession.isQrScanEnabled
+                          ? Icons.qr_code_scanner_rounded
+                          : Icons.qr_code_2_rounded,
+                      WorkerSession.isQrScanEnabled ? 'Escanear QR' : 'Sin QR',
                     ),
                     _buildNavItem(1, Icons.checklist_rounded, 'Despachadores'),
                     _buildNavItem(2, Icons.table_chart_rounded, 'Tabla'),
@@ -378,6 +423,93 @@ class _WorkerShellState extends State<WorkerShell> {
                 ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQrDisabledView() {
+    final clientName = WorkerSession.activeClientName ?? 'este cliente';
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: GlassCard(
+          borderRadius: 24,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AquaColors.slateBlue.withValues(alpha: 0.12),
+                  border: Border.all(
+                    color: AquaColors.slateBlue.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.qr_code_scanner_rounded,
+                  size: 32,
+                  color: AquaColors.slateBlue,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Escaneo QR Desactivado',
+                style: GoogleFonts.montserrat(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AquaColors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'El administrador ha configurado a "$clientName" para entrega directa de garrafones.',
+                style: GoogleFonts.montserrat(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  color: AquaColors.textSecondary,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AquaColors.glacier.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AquaColors.platinum),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded, size: 18, color: AquaColors.turquoise),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'A este cliente se le entregan los garrafones directamente en racks, no requiere escanear despachadores por QR.',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AquaColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              AquaButton(
+                text: 'Ver despachadores y reabastos',
+                icon: Icons.checklist_rounded,
+                onPressed: () => _onTabSelected(1),
+              ),
+            ],
           ),
         ),
       ),

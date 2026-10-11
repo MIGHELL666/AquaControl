@@ -34,7 +34,9 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
   ZoneItem get _currentZone {
     return kDefaultZones.firstWhere(
       (z) => z.name.toLowerCase() == widget.pointName.toLowerCase(),
-      orElse: () => kDefaultZones.first,
+      orElse: () => kDefaultZones.isNotEmpty
+          ? kDefaultZones.first
+          : ZoneItem(name: widget.pointName, subtitle: '', dispensers: []),
     );
   }
 
@@ -475,11 +477,10 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                   MaterialPageRoute(
                     builder: (_) => DispenserDetailScreen(
                       dispenserId: dispenser.id,
-                      pointName: zoneName,
                       brand: dispenser.brand,
-                      model: dispenser.model,
                       serialNumber: dispenser.serialNumber,
                       isSupplied: dispenser.isSupplied,
+                      isActive: dispenser.isActive,
                     ),
                   ),
                 );
@@ -779,11 +780,10 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
                       MaterialPageRoute(
                         builder: (_) => DispenserDetailScreen(
                           dispenserId: dispenser.id,
-                          pointName: zoneName,
                           brand: dispenser.brand,
-                          model: dispenser.model,
                           serialNumber: dispenser.serialNumber,
                           isSupplied: dispenser.isSupplied,
+                          isActive: dispenser.isActive,
                         ),
                       ),
                     );
@@ -974,6 +974,9 @@ class _PointDetailScreenState extends State<PointDetailScreen> {
     final List<String> availableZones = kDefaultZones
         .map((z) => z.name)
         .toList();
+    if (!availableZones.contains(currentZoneName)) {
+      availableZones.insert(0, currentZoneName);
+    }
 
     showModalBottomSheet(
       context: context,

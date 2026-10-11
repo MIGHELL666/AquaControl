@@ -10,20 +10,18 @@ import 'digital_signature_screen.dart';
 
 class DispenserDetailScreen extends StatefulWidget {
   final String dispenserId;
-  final String pointName;
   final String brand;
-  final String model;
   final String serialNumber;
   final bool isSupplied;
+  final bool isActive;
 
   const DispenserDetailScreen({
     super.key,
     this.dispenserId = '#023',
-    this.pointName = 'Producción',
     this.brand = 'EcoWater',
-    this.model = 'E-200',
     this.serialNumber = 'SN345678',
     this.isSupplied = true,
+    this.isActive = true,
   });
 
   @override
@@ -35,21 +33,14 @@ class _DispenserDetailScreenState extends State<DispenserDetailScreen> {
   late bool _isResupplyMode;
   ClientItem? _selectedClient;
 
+  bool get _hasAssignedClient =>
+      getClientForDispenser(widget.dispenserId) != null;
+
   @override
   void initState() {
     super.initState();
     _isResupplyMode = widget.isSupplied;
-    if (WorkerSession.hasClient) {
-      for (final c in kDefaultClients) {
-        if (c.companyName == WorkerSession.activeClientName) {
-          _selectedClient = c;
-          break;
-        }
-      }
-    }
-    _selectedClient ??= kDefaultClients.isNotEmpty
-        ? kDefaultClients.first
-        : null;
+    _selectedClient = getClientForDispenser(widget.dispenserId);
   }
 
   void _onProceedToSignature() {
@@ -57,7 +48,7 @@ class _DispenserDetailScreenState extends State<DispenserDetailScreen> {
       MaterialPageRoute(
         builder: (_) => DigitalSignatureScreen(
           dispenserId: widget.dispenserId,
-          pointName: widget.pointName,
+          pointName: '',
           bottleCount: _bottleCount,
           isResupply: _isResupplyMode,
           workerName: 'Juan Pérez',
@@ -159,17 +150,58 @@ class _DispenserDetailScreenState extends State<DispenserDetailScreen> {
                   ),
                   child: Column(
                     children: [
-                      _buildDetailRow('Punto / Zona:', widget.pointName),
+                      _buildDetailRow('Identificador:', widget.dispenserId),
                       const SizedBox(height: 8),
-                      _buildDetailRow(
-                        'Marca y Modelo:',
-                        '${widget.brand} ${widget.model}',
-                      ),
+                      _buildDetailRow('Marca:', widget.brand),
                       const SizedBox(height: 8),
                       _buildDetailRow('Serie:', widget.serialNumber),
+                      const SizedBox(height: 8),
+                      _buildDetailRow(
+                        'Estado:',
+                        widget.isActive ? 'Activo' : 'Inactivo',
+                      ),
+                      const SizedBox(height: 8),
+                      _buildDetailRow(
+                        'Empresa:',
+                        _selectedClient?.companyName ?? 'Sin asignar',
+                      ),
                     ],
                   ),
                 ),
+                if (!_hasAssignedClient) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.amber.shade700),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          size: 21,
+                          color: Colors.amber.shade900,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Este despachador no está asociado a ningún cliente. Puedes continuar con el abastecimiento, pero el movimiento quedará sin cliente asignado.',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 11.5,
+                              height: 1.4,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.brown.shade900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
 
                 // Selector: Abastecimiento vs Reabastecimiento

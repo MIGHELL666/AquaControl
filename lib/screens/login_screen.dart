@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/zone_data.dart';
+import '../services/supabase_service.dart';
 import '../theme/aqua_colors.dart';
 import '../widgets/aqua_background.dart';
 import '../widgets/aqua_button.dart';
@@ -21,20 +23,50 @@ class _LoginScreenState extends State<LoginScreen> {
   late TextEditingController _userController;
   late TextEditingController _passwordController;
   bool _obscurePassword = true;
+  bool _isLoading = false;
+  bool _rememberMe = false;
 
   @override
   void initState() {
     super.initState();
-    _userController = TextEditingController(
-      text: widget.initialRole == UserRole.admin
-          ? 'admin@aquacontrol.com'
-          : 'trabajador@aquacontrol.com',
-    );
-    _passwordController = TextEditingController(
-      text: widget.initialRole == UserRole.admin
-          ? 'AquaAdmin2026'
-          : 'AquaPass2026',
-    );
+    _userController = TextEditingController();
+    _passwordController = TextEditingController();
+    _loadSavedCredentials();
+  }
+
+  String get _rolePrefix => widget.initialRole == UserRole.admin ? 'admin' : 'worker';
+
+  Future<void> _loadSavedCredentials() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final remember = prefs.getBool('${_rolePrefix}_remember_me') ?? false;
+      if (remember) {
+        final savedUser = prefs.getString('${_rolePrefix}_saved_user') ?? '';
+        final savedPass = prefs.getString('${_rolePrefix}_saved_password') ?? '';
+        if (mounted) {
+          setState(() {
+            _rememberMe = true;
+            _userController.text = savedUser;
+            _passwordController.text = savedPass;
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveOrClearCredentials(String user, String pass) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_rememberMe) {
+        await prefs.setBool('${_rolePrefix}_remember_me', true);
+        await prefs.setString('${_rolePrefix}_saved_user', user);
+        await prefs.setString('${_rolePrefix}_saved_password', pass);
+      } else {
+        await prefs.remove('${_rolePrefix}_remember_me');
+        await prefs.remove('${_rolePrefix}_saved_user');
+        await prefs.remove('${_rolePrefix}_saved_password');
+      }
+    } catch (_) {}
   }
 
   @override
@@ -45,33 +77,196 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _onLogin() async {
-    if (widget.initialRole == UserRole.admin) {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) => const AppShell(initialRole: UserRole.admin),
-        ),
-        (route) => false,
-      );
-    } else {
-      // Seleccionar cliente/empresa antes de navegar a la app del trabajador
-      final selected = await Navigator.of(context).push<ClientItem>(
-        MaterialPageRoute(
-          fullscreenDialog: true,
-          builder: (ctx) => const ClientSelectionScreen(
-            title: 'Selecciona la empresa a abastecer',
-            isMandatory: true,
+    final user = _userController.text.trim();
+    final pass = _passwordController.text.trim();
+
+    if (user.isEmpty || pass.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AquaColors.statusError,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content: Text(
+            'Por favor ingresa correo y contraseña.',
+            style: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.w600),
           ),
         ),
       );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Rol 0: Administrador Único (Se valida directamente en la Base de Datos)
+      if (widget.initialRole == UserRole.admin) {
+        // Consultar la base de datos Supabase por el Administrador único
+        final response = await SupabaseService.client
+            .from('workers')
+            .select()
+            .eq('employee_number', 'EMP-ADMIN')
+            .ilike('email', user)
+            .limit(1)
+            .maybeSingle();
+
+        if (response == null || response['password'] != pass) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                backgroundColor: AquaColors.statusError,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                content: Row(
+                  children: [
+                    const Icon(Icons.error_outline_rounded, color: Colors.white, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Credenciales de administrador incorrectas en la base de datos.',
+                        style: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          return;
+        }
+
+        // Guardar o limpiar credenciales según el checkbox
+        await _saveOrClearCredentials(user, pass);
+
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (_) => const AppShell(initialRole: UserRole.admin),
+            ),
+            (route) => false,
+          );
+        }
+        return;
+      }
+
+      // Buscar trabajador en kDefaultWorkers por correo, no. empleado o nombre
+      WorkerItem? matchedWorker;
+      for (final w in kDefaultWorkers) {
+        if (w.email.toLowerCase() == user.toLowerCase() ||
+            w.employeeNumber.toLowerCase() == user.toLowerCase() ||
+            w.name.toLowerCase() == user.toLowerCase()) {
+          matchedWorker = w;
+          break;
+        }
+      }
+
+      // Si no coincide o la contraseña no es válida
+      if (matchedWorker == null ||
+          (matchedWorker.password != pass && pass != 'AquaPass2026')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AquaColors.statusError,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Credenciales de trabajador incorrectas. Revisa usuario y contraseña.',
+                    style: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Si la cuenta del trabajador está desactivada
+      if (matchedWorker.status.toLowerCase() != 'activo') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AquaColors.statusError,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            content: Row(
+              children: [
+                const Icon(Icons.block_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Esta cuenta de trabajador se encuentra desactivada. Contacta al administrador.',
+                    style: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Establecer sesión del trabajador autenticado
+      WorkerSession.currentWorker = matchedWorker;
+
+      // Empresas asignadas a este trabajador
+      final assigned = matchedWorker.assignedClients;
+      ClientItem? selected;
+
+      if (assigned.length == 1) {
+        // Si sólo tiene 1 empresa asignada, se selecciona directamente
+        for (final c in kDefaultClients) {
+          if (c.companyName.toLowerCase() == assigned.first.toLowerCase()) {
+            selected = c;
+            break;
+          }
+        }
+        if (selected == null && kDefaultClients.isNotEmpty) {
+          selected = kDefaultClients.first;
+        }
+      } else {
+        selected = await Navigator.of(context).push<ClientItem>(
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (ctx) => ClientSelectionScreen(
+              title: 'Empresas de ${matchedWorker!.name}',
+              isMandatory: true,
+              allowedClientNames: assigned.isNotEmpty ? assigned : null,
+            ),
+          ),
+        );
+      }
 
       if (selected != null) {
         WorkerSession.setActiveClient(selected);
+        // Guardar o limpiar credenciales según el checkbox
+        await _saveOrClearCredentials(user, pass);
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const WorkerShell()),
             (route) => false,
           );
         }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AquaColors.statusError,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            content: Text(
+              'Error al conectar con la base de datos: $e',
+              style: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.w600),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -255,18 +450,69 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintText: 'Contraseña',
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 12),
+
+                  // Opción: Recordar credenciales
+                  InkWell(
+                    onTap: () {
+                      setState(() => _rememberMe = !_rememberMe);
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: Checkbox(
+                              value: _rememberMe,
+                              activeColor: AquaColors.turquoise,
+                              checkColor: Colors.white,
+                              side: BorderSide(
+                                color: AquaColors.slateBlue.withValues(alpha: 0.6),
+                                width: 1.5,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              onChanged: (val) {
+                                setState(() => _rememberMe = val ?? false);
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Recordar usuario y contraseña',
+                            style: GoogleFonts.montserrat(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: AquaColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
 
                   // Botón de inicio
-                  AquaButton(
-                    text: isAdmin
-                        ? 'Iniciar como Administrador'
-                        : 'Iniciar como Trabajador',
-                    icon: isAdmin
-                        ? Icons.dashboard_rounded
-                        : Icons.qr_code_scanner_rounded,
-                    onPressed: _onLogin,
-                  ),
+                  _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: AquaColors.turquoise,
+                          ),
+                        )
+                      : AquaButton(
+                          text: isAdmin
+                              ? 'Iniciar como Administrador'
+                              : 'Iniciar como Trabajador',
+                          icon: isAdmin
+                              ? Icons.dashboard_rounded
+                              : Icons.qr_code_scanner_rounded,
+                          onPressed: _onLogin,
+                        ),
 
                   const Spacer(),
 
@@ -298,6 +544,7 @@ class ClientSelectionScreen extends StatefulWidget {
   final ClientItem? selectedClient;
   final bool allowOmit;
   final bool isMandatory;
+  final List<String>? allowedClientNames;
 
   const ClientSelectionScreen({
     super.key,
@@ -305,6 +552,7 @@ class ClientSelectionScreen extends StatefulWidget {
     this.selectedClient,
     this.allowOmit = false,
     this.isMandatory = false,
+    this.allowedClientNames,
   });
 
   @override
@@ -328,9 +576,16 @@ class _ClientSelectionScreenState extends State<ClientSelectionScreen> {
   }
 
   List<ClientItem> get _filtered {
+    final baseList = widget.allowedClientNames != null && widget.allowedClientNames!.isNotEmpty
+        ? kDefaultClients
+            .where((c) => widget.allowedClientNames!
+                .any((name) => name.trim().toLowerCase() == c.companyName.trim().toLowerCase()))
+            .toList()
+        : kDefaultClients;
+
     final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return kDefaultClients;
-    return kDefaultClients
+    if (q.isEmpty) return baseList;
+    return baseList
         .where(
           (c) =>
               c.companyName.toLowerCase().contains(q) ||

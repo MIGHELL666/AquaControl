@@ -36,6 +36,8 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
   final TextEditingController _recipientController = TextEditingController();
   List<Offset> _signaturePoints = [];
   String? _errorMessage;
+  bool _isSigning = false;
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -43,7 +45,8 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
     super.dispose();
   }
 
-  void _onConfirm() {
+  Future<void> _onConfirm() async {
+    if (_isSaving) return;
     final recipient = _recipientController.text.trim();
     if (recipient.isEmpty) {
       setState(() {
@@ -59,27 +62,39 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
       return;
     }
 
-    // Process supply or resupply in memory store
-    if (widget.isResupply) {
-      resupplyDispenser(
-        widget.dispenserId,
-        widget.bottleCount,
-        recipientName: recipient,
-        signaturePoints: _signaturePoints,
-        workerName: widget.workerName,
-        clientName: widget.clientName,
-        pricePerBottle: widget.pricePerBottle,
-      );
-    } else {
-      markDispenserSupplied(
-        widget.dispenserId,
-        widget.bottleCount,
-        recipientName: recipient,
-        signaturePoints: _signaturePoints,
-        workerName: widget.workerName,
-        clientName: widget.clientName,
-        pricePerBottle: widget.pricePerBottle,
-      );
+    setState(() {
+      _isSaving = true;
+      _errorMessage = null;
+    });
+
+    final saved = widget.isResupply
+        ? await resupplyDispenser(
+            widget.dispenserId,
+            widget.bottleCount,
+            recipientName: recipient,
+            signaturePoints: _signaturePoints,
+            workerName: widget.workerName,
+            clientName: widget.clientName,
+            pricePerBottle: widget.pricePerBottle,
+          )
+        : await markDispenserSupplied(
+            widget.dispenserId,
+            widget.bottleCount,
+            recipientName: recipient,
+            signaturePoints: _signaturePoints,
+            workerName: widget.workerName,
+            clientName: widget.clientName,
+            pricePerBottle: widget.pricePerBottle,
+          );
+
+    if (!saved) {
+      if (!mounted) return;
+      setState(() {
+        _isSaving = false;
+        _errorMessage =
+            'No se pudo guardar el abastecimiento. Revisa la conexión e inténtalo de nuevo.';
+      });
+      return;
     }
 
     final now = DateTime.now();
@@ -88,6 +103,7 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
     final timeStr =
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
 
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => SuccessScreen(
@@ -111,7 +127,13 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
       body: AquaBackground(
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+            physics: _isSigning
+                ? const NeverScrollableScrollPhysics()
+                : const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 12.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -153,7 +175,10 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: widget.isResupply
                             ? AquaColors.statusPendingBg
@@ -196,7 +221,9 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
                         const SizedBox(height: 8),
                       ],
                       _buildSummaryRow(
-                        widget.isResupply ? 'Garrafones a reabastecer:' : 'Garrafones entregados:',
+                        widget.isResupply
+                            ? 'Garrafones a reabastecer:'
+                            : 'Garrafones entregados:',
                         '${widget.bottleCount} garrafones',
                         isHighlight: true,
                       ),
@@ -289,6 +316,11 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
 
                 SignaturePad(
                   height: 200,
+                  onSigningActiveChanged: (active) {
+                    if (_isSigning != active) {
+                      setState(() => _isSigning = active);
+                    }
+                  },
                   onSignatureChanged: (points) {
                     setState(() {
                       _signaturePoints = points;
@@ -302,7 +334,10 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
                 if (_errorMessage != null) ...[
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: AquaColors.statusErrorBg,
                       borderRadius: BorderRadius.circular(12),
@@ -338,6 +373,7 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
                       ? 'Confirmar reabastecimiento y firma'
                       : 'Confirmar abastecimiento y firma',
                   icon: Icons.verified_rounded,
+                  isLoading: _isSaving,
                   onPressed: _onConfirm,
                 ),
                 const SizedBox(height: 12),
@@ -355,7 +391,11 @@ class _DigitalSignatureScreenState extends State<DigitalSignatureScreen> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, {bool isHighlight = false}) {
+  Widget _buildSummaryRow(
+    String label,
+    String value, {
+    bool isHighlight = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [

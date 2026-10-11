@@ -210,7 +210,11 @@ class _SupplyPointsScreenState extends State<SupplyPointsScreen> {
                       final item = _filteredPoints[index];
                       final zone = kDefaultZones.firstWhere(
                         (z) => z.name == item.title,
-                        orElse: () => kDefaultZones.first,
+                        orElse: () => ZoneItem(
+                          name: item.title,
+                          subtitle: '',
+                          dispensers: [],
+                        ),
                       );
                       final isSupplied = item.status == SupplyStatus.supplied;
                       return GlassCard(

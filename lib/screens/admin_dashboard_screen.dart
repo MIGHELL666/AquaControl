@@ -4,17 +4,19 @@ import '../models/zone_data.dart';
 import '../theme/aqua_colors.dart';
 import '../widgets/aqua_button.dart';
 import '../widgets/glass_card.dart';
-import 'clients_screen.dart';
-import 'register_dispenser_screen.dart';
+import 'dispensers_management_screen.dart';
 import 'role_selection_screen.dart';
 import 'workers_management_screen.dart';
+import 'register_zones_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
+  final VoidCallback? onNavigateToClients;
   final VoidCallback? onNavigateToPoints;
   final VoidCallback? onNavigateToHistory;
 
   const AdminDashboardScreen({
     super.key,
+    this.onNavigateToClients,
     this.onNavigateToPoints,
     this.onNavigateToHistory,
   });
@@ -106,164 +108,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         );
       },
-    );
-  }
-
-  void _showAddZoneDialog() {
-    final nameCtrl = TextEditingController();
-    final subtitleCtrl = TextEditingController();
-    String? error;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (dCtx, setDState) => Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-          child: GlassCard(
-            borderRadius: 22,
-            padding: const EdgeInsets.all(22),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AquaColors.turquoise.withValues(alpha: 0.12),
-                      ),
-                      child: const Icon(
-                        Icons.add_location_alt_rounded,
-                        size: 18,
-                        color: AquaColors.turquoise,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Nueva Zona',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: AquaColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.close,
-                        size: 18,
-                        color: AquaColors.textSecondary,
-                      ),
-                      onPressed: () => Navigator.of(ctx).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _buildTextField(
-                  nameCtrl,
-                  'Nombre de la zona',
-                  'Ej. Calidad',
-                  Icons.place_rounded,
-                ),
-                const SizedBox(height: 10),
-                _buildTextField(
-                  subtitleCtrl,
-                  'Descripción',
-                  'Ej. Laboratorio de análisis',
-                  Icons.notes_rounded,
-                ),
-                if (error != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    error!,
-                    style: GoogleFonts.montserrat(
-                      fontSize: 11,
-                      color: AquaColors.statusError,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 18),
-                AquaButton(
-                  text: 'Agregar Zona',
-                  icon: Icons.add_rounded,
-                  onPressed: () {
-                    final name = nameCtrl.text.trim();
-                    if (name.isEmpty) {
-                      setDState(() => error = 'El nombre es requerido.');
-                      return;
-                    }
-                    final exists = kDefaultZones.any(
-                      (z) => z.name.toLowerCase() == name.toLowerCase(),
-                    );
-                    if (exists) {
-                      setDState(
-                        () => error = 'Ya existe una zona con ese nombre.',
-                      );
-                      return;
-                    }
-                    addZone(
-                      ZoneItem(
-                        name: name,
-                        subtitle: subtitleCtrl.text.trim().isEmpty
-                            ? 'Zona de abastecimiento'
-                            : subtitleCtrl.text.trim(),
-                        dispensers: [],
-                      ),
-                    );
-                    Navigator.of(ctx).pop();
-                    setState(() {});
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-    TextEditingController ctrl,
-    String label,
-    String hint,
-    IconData icon,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AquaColors.glassBorder),
-      ),
-      child: TextField(
-        controller: ctrl,
-        style: GoogleFonts.montserrat(
-          fontSize: 13,
-          color: AquaColors.textPrimary,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          prefixIcon: Icon(icon, size: 18, color: AquaColors.slateBlue),
-          labelStyle: GoogleFonts.montserrat(
-            fontSize: 12,
-            color: AquaColors.textSecondary,
-          ),
-          hintStyle: GoogleFonts.montserrat(
-            fontSize: 12,
-            color: AquaColors.textMuted,
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 14,
-          ),
-        ),
-      ),
     );
   }
 
@@ -819,29 +663,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
           const SizedBox(height: 14),
 
-          // ── KPI Grid 2×2 ───────────────────────────────────
-          Row(
-            children: [
-              Expanded(
-                child: _buildKpiCard(
-                  icon: Icons.water_drop_rounded,
-                  value: '${kpiMetrics.totalDispensers}',
-                  label: selectedClient != null
-                      ? 'Despachadores\ndel cliente'
-                      : 'Total de\ndespachadores',
-                  color: AquaColors.turquoise,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildKpiCard(
-                  icon: Icons.check_circle_rounded,
-                  value: '${kpiMetrics.suppliedCount}',
-                  label: 'Abastecidos',
-                  color: AquaColors.statusSupplied,
-                ),
-              ),
-            ],
+          // ── KPI Cards (Total de despachadores full-width + Pendientes y Abastecidos) ──
+          _buildTotalKpiCard(
+            icon: Icons.water_drop_rounded,
+            value: '${kpiMetrics.totalDispensers}',
+            label: selectedClient != null
+                ? 'Despachadores del cliente'
+                : 'Total de despachadores',
+            color: AquaColors.turquoise,
           ),
           const SizedBox(height: 12),
           Row(
@@ -850,153 +679,146 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 child: _buildKpiCard(
                   icon: Icons.schedule_rounded,
                   value: '${kpiMetrics.pendingCount}',
-                  label: 'Pendientes',
+                  label: 'Pendientes (Hoy)',
                   color: AquaColors.statusPending,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildKpiCard(
-                  icon: Icons.inventory_2_rounded,
-                  value: '${kpiMetrics.totalBottles}',
-                  label: selectedClient != null
-                      ? 'Garrafones en\nsus despachadores'
-                      : 'Total de\ngarrafones',
-                  color: AquaColors.slateBlue,
+                  icon: Icons.check_circle_rounded,
+                  value: '${kpiMetrics.suppliedCount}',
+                  label: 'Abastecidos (Hoy)',
+                  color: AquaColors.statusSupplied,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 18),
 
-          // ── Acciones rápidas: Clientes & Trabajadores ───────
-          Row(
-            children: [
-              Expanded(
-                child: _buildQuickActionCard(
-                  icon: Icons.business_rounded,
-                  title: 'Clientes',
-                  subtitle: '${kDefaultClients.length} empresas',
-                  color: AquaColors.turquoise,
-                  onTap: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ClientsScreen()),
-                    );
-                    setState(() {});
-                  },
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildQuickActionCard(
-                  icon: Icons.badge_rounded,
-                  title: 'Trabajadores',
-                  subtitle: '${kDefaultWorkers.length} activos',
-                  color: AquaColors.slateBlue,
-                  onTap: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const WorkersManagementScreen(),
-                      ),
-                    );
-                    setState(() {});
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // ── Botón Registrar Despachador — sutil, debajo de las tarjetas ──
-          GlassCard(
-            borderRadius: 14,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+          // ── Acciones rápidas: Registrar Trabajadores y Registrar Despachadores ──
+          _buildQuickActionCard(
+            icon: Icons.badge_rounded,
+            title: 'Registrar trabajadores',
+            subtitle:
+                '${kDefaultWorkers.length} activos • Alta y gestión de personal',
+            color: AquaColors.slateBlue,
             onTap: () async {
               await Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => const RegisterDispenserScreen(),
+                  builder: (_) => const WorkersManagementScreen(),
                 ),
               );
               setState(() {});
             },
-            child: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AquaColors.turquoise.withValues(alpha: 0.10),
-                  ),
-                  child: const Icon(
-                    Icons.add_circle_outline_rounded,
-                    size: 17,
-                    color: AquaColors.turquoise,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Registrar nuevo despachador',
-                    style: GoogleFonts.montserrat(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AquaColors.textSecondary,
-                    ),
-                  ),
-                ),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  size: 16,
-                  color: AquaColors.textMuted,
-                ),
-              ],
-            ),
           ),
           const SizedBox(height: 12),
-
-          // ── Nueva Zona (tarjeta sutil estilo Registrar despachador) ──
-          GlassCard(
-            borderRadius: 14,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            onTap: _showAddZoneDialog,
-            borderColor: AquaColors.platinum,
-            child: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AquaColors.glacier.withValues(alpha: 0.55),
-                  ),
-                  child: const Icon(
-                    Icons.add_location_alt_outlined,
-                    size: 16,
-                    color: AquaColors.slateBlue,
-                  ),
+          _buildQuickActionCard(
+            icon: Icons.add_circle_outline_rounded,
+            title: 'Registrar nuevos despachadores',
+            subtitle:
+                '${getTotalDispensersCount()} equipos • Lista y registro de despachadores',
+            color: AquaColors.turquoise,
+            onTap: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const DispensersManagementScreen(),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Registrar nueva zona',
-                    style: GoogleFonts.montserrat(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AquaColors.textSecondary,
-                    ),
-                  ),
-                ),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  size: 16,
-                  color: AquaColors.textMuted,
-                ),
-              ],
-            ),
+              );
+              setState(() {});
+            },
+          ),
+          const SizedBox(height: 12),
+          _buildQuickActionCard(
+            icon: Icons.location_on_rounded,
+            title: 'Registrar zonas',
+            subtitle:
+                '${kDefaultZones.length} zonas • Áreas de instalación de despachadores',
+            color: AquaColors.slateBlue,
+            onTap: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const RegisterZonesScreen()),
+              );
+              setState(() {});
+            },
           ),
           const SizedBox(height: 24),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTotalKpiCard({
+    required IconData icon,
+    required String value,
+    required String label,
+    required Color color,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: GlassCard(
+        borderRadius: 20,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        borderColor: color.withValues(alpha: 0.35),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    color.withValues(alpha: 0.22),
+                    color.withValues(alpha: 0.08),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(
+                  color: color.withValues(alpha: 0.35),
+                  width: 1.5,
+                ),
+              ),
+              child: Icon(icon, color: color, size: 26),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label.toUpperCase(),
+                    style: GoogleFonts.montserrat(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                      color: AquaColors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Equipos registrados en sistema',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 11,
+                      color: AquaColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              value,
+              style: GoogleFonts.montserrat(
+                fontSize: 34,
+                fontWeight: FontWeight.w800,
+                color: AquaColors.textPrimary,
+                height: 1.0,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

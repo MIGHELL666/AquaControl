@@ -43,7 +43,7 @@ class AquaBottomNavBar extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildNavItem(context, 0, Icons.home_rounded, 'Inicio'),
-                  _buildNavItem(context, 1, Icons.location_on_rounded, 'Zonas'),
+                  _buildNavItem(context, 1, Icons.business_rounded, 'Clientes'),
                   _buildNavItem(context, 2, Icons.table_chart_rounded, 'Registros'),
                 ],
               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/supabase_service.dart';
 import '../theme/aqua_colors.dart';
 import '../widgets/aqua_background.dart';
 import '../widgets/aqua_logo.dart';
@@ -7,8 +8,20 @@ import '../widgets/glass_card.dart';
 import 'app_shell.dart';
 import 'login_screen.dart';
 
-class RoleSelectionScreen extends StatelessWidget {
+class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
+
+  @override
+  State<RoleSelectionScreen> createState() => _RoleSelectionScreenState();
+}
+
+class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Asegurar que los datos más recientes de Supabase estén sincronizados
+    SupabaseService.syncAllFromSupabase();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +104,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   icon: Icons.shield_rounded,
                   title: 'Administrador',
                   subtitle:
-                      'Gestión de zonas, clientes y reportes operativos',
+                      'Gestión de clientes, empresas y reportes operativos',
                   color: AquaColors.turquoise,
                   onTap: () {
                     Navigator.of(context).push(
